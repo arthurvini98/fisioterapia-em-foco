@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {FrameScheduler} from '../dist/render-loop.js';
+const callbacks=[];let renders=0,moving=0,dirtyDuringFrame=false;
+const loop=new FrameScheduler(()=>{renders++;if(dirtyDuringFrame){dirtyDuringFrame=false;loop.request();}return moving-->0;},fn=>callbacks.push(fn));
+const flush=()=>{let count=0;while(callbacks.length){callbacks.shift()();assert.ok(++count<100);}};
+loop.request();loop.request();loop.request();assert.equal(callbacks.length,1);flush();assert.equal(renders,1);assert.equal(callbacks.length,0);
+moving=4;loop.request();flush();assert.equal(renders,6);assert.equal(callbacks.length,0);
+dirtyDuringFrame=true;moving=0;loop.request();flush();assert.equal(renders,8);assert.equal(callbacks.length,0);
+loop.request();flush();assert.equal(renders,9);
+console.log('PASS: coalesced events, animation frames, idle stop, change during render and restart after idle');
