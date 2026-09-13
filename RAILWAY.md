@@ -2,9 +2,9 @@
 
 ## O que está preparado
 
-Servidor Node.js 24, Dockerfile, healthcheck `/healthz`, SQLite persistente e migrações automáticas transacionais. O modelo 3D e os recursos de estudo existentes são reutilizados. O Dockerfile não depende de Sites nem executa o build do Worker.
+Servidor Node.js 24, Dockerfile, healthcheck `/healthz`, SQLite persistente e migrações automáticas transacionais. O modelo 3D e os recursos de estudo existentes são reutilizados. O Dockerfile não depende de Sites nem executa o build do Worker. O atlas é público; cada navegador recebe um identificador aleatório em cookie seguro para separar anotações e progresso.
 
-Esta configuração é para **uma pessoa**, com usuário e senha no diálogo de autenticação do navegador. Quem receber essas credenciais terá acesso ao mesmo progresso e às mesmas anotações. Para contas individuais de colegas, implementar autenticação multiusuário antes de compartilhar credenciais.
+O site é público. O cookie anônimo de cada navegador guarda a associação ao seu histórico, por até um ano. Limpar os cookies, usar outro navegador ou dispositivo cria outro histórico. Isso não equivale a uma conta: para sincronizar dados entre dispositivos ou recuperá-los após limpar cookies, será necessário implementar login.
 
 ## Primeira publicação
 
@@ -15,15 +15,13 @@ Esta configuração é para **uma pessoa**, com usuário e senha no diálogo de 
 
 | Variável | Valor |
 | --- | --- |
-| `APP_USERNAME` | Seu nome de login, sem dois-pontos |
-| `APP_PASSWORD` | Senha exclusiva com pelo menos 16 caracteres, definida diretamente no Railway |
 | `DATA_DIR` | `/data` |
 | `APP_ORIGIN` | URL HTTPS exata do serviço, sem caminho, após gerar o domínio |
 
 O Railway fornece `PORT`. O servidor escuta em `0.0.0.0`. Se `RAILWAY_PUBLIC_DOMAIN` estiver disponível, ele define a origem automaticamente; `APP_ORIGIN` prevalece, especialmente para domínio próprio.
 
 5. Gerar o domínio em Settings → Networking. Aplicar as variáveis e publicar. O serviço não inicia no Railway sem volume persistente e origem configurada.
-6. Abrir o endereço, informar usuário e senha e conferir uma anotação e uma etapa de aula. Fazer um redeploy para confirmar que os dados permanecem. Ativar backups do volume no Railway.
+6. Abrir o endereço sem senha, conferir uma anotação e uma etapa de aula e abrir janela anônima para confirmar separação. Fazer um redeploy para confirmar que os dados permanecem no mesmo navegador. Ativar backups do volume no Railway.
 
 ## Mudanças futuras
 
@@ -48,11 +46,11 @@ As migrações em `drizzle/*.sql` são aplicadas uma vez na inicialização, ap�
 
 ## Teste local
 
-Com Node.js 24, definir `APP_USERNAME`, `APP_PASSWORD` e `APP_ORIGIN=http://localhost:3000` no ambiente e executar `npm start`. O banco local fica em `data/`, ignorado pelo Git. Os testes usam credenciais fictícias e banco temporário.
+Com Node.js 24, definir `APP_ORIGIN=http://localhost:3000` no ambiente e executar `npm start`. O banco local fica em `data/`, ignorado pelo Git. Os testes usam banco temporário.
 
 ## Validação realizada
 
-Testes HTTP reais: autenticação, arquivos do modelo, bloqueio de arquivos internos, identidade definida pelo servidor, bloqueio de origem externa, progresso, conflito de notas e persistência após reinício. O container e a publicação no Railway ainda precisam ser executados na conta conectada.
+Testes HTTP reais: acesso público, isolamento de visitantes por cookie, arquivos do modelo, bloqueio de arquivos internos, identidade definida pelo servidor, bloqueio de origem externa, progresso, conflito de notas e persistência após reinício. O container e a publicação no Railway ainda precisam ser executados na conta conectada.
 
 ## Referências
 

@@ -83,4 +83,4 @@ Painel Minhas anotações em cada osso ou músculo, com até 4.000 caracteres e 
 
 ### Hospedagem no Railway
 
-A adaptação independente com Node.js, SQLite persistente e acesso pessoal está em `server/`. Ver `RAILWAY.md` para configurar GitHub, volume, variáveis e publicação automática. A transferência dos dados antigos e a primeira publicação no Railway permanecem pendentes.
+A adaptação independente com Node.js, SQLite persistente e acesso público com históricos separados por navegador está em `server/`. Ver `RAILWAY.md` para configurar GitHub, volume, variáveis e publicação automática. A transferência dos dados antigos e a primeira publicação no Railway permanecem pendentes.
