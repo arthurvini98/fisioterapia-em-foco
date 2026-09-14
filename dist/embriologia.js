@@ -17,17 +17,19 @@ function show(){
  model=buildModel(stage.kind,$('cut').checked);scene.add(model.root);
  for(const name of model.parts.keys()){const button=document.createElement('button');button.textContent=name;button.onclick=()=>select(name);$('parts').append(button);}
  $('play').disabled=false;$('restart').disabled=false;$('timeline').disabled=false;updateMotion();
- reset();
+ reset();if(autoplay&&!document.hidden)startPlayback();
 }
 function reset(){if(!camera)return;camera.position.set(0,0,7.5);controls.target.set(0,0,0);controls.update();render();}
 let playing=false,moment=0,lastTime=null,frame=null;
+let autoplay=!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function updateMotion(){if(!model)return;applyMotion(model,stages[index].kind,moment);$('timeline').value=Math.round(moment*1000);$('motion-caption').textContent=motionCaption(stages[index].kind);render();}
 function pause(){playing=false;lastTime=null;if(frame!==null)cancelAnimationFrame(frame);frame=null;$('play').textContent='Reproduzir';}
-function tick(now){if(!playing)return;if(lastTime!==null)moment=Math.min(1,moment+Math.min(now-lastTime,100)/7000*Number($('speed').value));lastTime=now;updateMotion();if(moment>=1)pause();else frame=requestAnimationFrame(tick);}
-$('play').onclick=()=>{if(playing){pause();return;}if(moment>=1)moment=0;playing=true;lastTime=null;$('play').textContent='Pausar';frame=requestAnimationFrame(tick);};
-$('restart').onclick=()=>{pause();moment=0;updateMotion();};
-$('timeline').oninput=()=>{pause();moment=Number($('timeline').value)/1000;updateMotion();};
-document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
+function tick(now){if(!playing)return;if(lastTime!==null)moment=(moment+Math.min(now-lastTime,100)/7000*Number($('speed').value))%1;lastTime=now;updateMotion();frame=requestAnimationFrame(tick);}
+function startPlayback(){if(playing||!model)return;if(moment>=1)moment=0;playing=true;lastTime=null;$('play').textContent='Pausar';frame=requestAnimationFrame(tick);}
+$('play').onclick=()=>{if(playing){autoplay=false;pause();return;}autoplay=true;startPlayback();};
+$('restart').onclick=()=>{pause();moment=0;updateMotion();if(autoplay)startPlayback();};
+$('timeline').oninput=()=>{autoplay=false;pause();moment=Number($('timeline').value)/1000;updateMotion();};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();else if(autoplay)startPlayback();});
 stages.forEach((stage,i)=>{const button=document.createElement('button');button.textContent=`${i+1}. ${stage.title}`;button.onclick=()=>{index=i;show();};$('steps').append(button);});
 $('prev').onclick=()=>{if(index>0){index--;show();}};$('next').onclick=()=>{if(index<stages.length-1){index++;show();}};$('cut').onchange=show;$('reset').onclick=reset;
 try{
@@ -39,3 +41,6 @@ try{
  $('error').hidden=true;
 }catch(error){renderer=null;scene=null;$('error').textContent='Não foi possível iniciar o 3D. Confira a aceleração gráfica do navegador. A aula em texto continua disponível.';console.error(error);}
 show();
+
+document.addEventListener('pointerdown',event=>{const settings=$('viewer-settings');if(settings.open&&!settings.contains(event.target))settings.open=false;});
+document.addEventListener('keydown',event=>{const settings=$('viewer-settings');if(event.key==='Escape'&&settings.open){settings.open=false;settings.querySelector('summary').focus();}});
