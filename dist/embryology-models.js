@@ -12,7 +12,7 @@ export function buildModel(kind,cut=true){
  for(let i=0;i<6;i++){const a=i*Math.PI/3;ball(.17,0xffb779,'Mitocôndrias',[Math.cos(a)*1.05,Math.sin(a)*1.05,0]).scale.set(1.6,.7,.7);}
  }else if(kind.startsWith('meiosis')){
  const second=kind==='meiosis2',centers=second?[[-1,-.85,0],[1,-.85,0],[-1,.85,0],[1,.85,0]]:[[-1,0,0],[1,0,0]];
- centers.forEach((p,i)=>{ball(.77,0x6ccdc1,`Célula ${i+1} · 23 cromossomos`,p,true);chromosome(p[0]-.22,p[1],.1,0xf49ab7,!second);chromosome(p[0]+.22,p[1],.1,0x89bfff,!second);});
+ centers.forEach((p,i)=>{const first=root.children.length;ball(.77,0x6ccdc1,`Célula ${i+1} · 23 cromossomos`,p,true);chromosome(p[0]-.22,p[1],.1,0xf49ab7,!second);chromosome(p[0]+.22,p[1],.1,0x89bfff,!second);root.children.slice(first).forEach(mesh=>{mesh.userData.cellCenter=p;});});
  }else if(kind==='route'){
  ball(.65,0xd5859c,'Útero',[0,-.35,0]).scale.set(.85,1.2,.5);tube([[0,-1,0],[0,-1.45,0],[0,-2,0]],.19,0xcaa1c9,'Vagina e colo uterino');
  tube([[0,.2,0],[.7,.75,0],[1.45,.85,0],[1.85,.35,0]],.13,0xf4b3b2,'Tuba uterina');ball(.35,0x9acbc3,'Ovário',[1.9,-.2,0]);
