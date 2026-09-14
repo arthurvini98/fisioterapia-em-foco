@@ -11,8 +11,24 @@ export function buildModel(kind,cut=true){
  for(let i=0;i<5;i++)tube([[-.4+i*.16,-.35,.2],[-.3+i*.16,.1,.35],[-.45+i*.16,.4,.1]],.025,0xf7a1c0,'Cromatina');
  for(let i=0;i<6;i++){const a=i*Math.PI/3;ball(.17,0xffb779,'Mitocôndrias',[Math.cos(a)*1.05,Math.sin(a)*1.05,0]).scale.set(1.6,.7,.7);}
  }else if(kind.startsWith('meiosis')){
- const second=kind==='meiosis2',centers=second?[[-1,-.85,0],[1,-.85,0],[-1,.85,0],[1,.85,0]]:[[-1,0,0],[1,0,0]];
- centers.forEach((p,i)=>{const first=root.children.length;ball(.77,0x6ccdc1,`Célula ${i+1} · 23 cromossomos`,p,true);chromosome(p[0]-.22,p[1],.1,0xf49ab7,!second);chromosome(p[0]+.22,p[1],.1,0x89bfff,!second);root.children.slice(first).forEach(mesh=>{mesh.userData.cellCenter=p;});});
+ const second=kind==='meiosis2';
+ const cells=second?[{y:-1,r:.82},{y:1,r:.82}]:[{y:0,r:1.55}];
+ cells.forEach((cell,ci)=>{
+  ball(cell.r,0x6ccdc1,second?`Célula após meiose I · ${ci+1}`:'Célula em meiose I',[0,cell.y,0],true).scale.x=1.45;
+  for(let pair=0;pair<2;pair++){
+   const y=cell.y+(pair===0?-.28:.28),length=pair===0?.2:.15;
+   for(let side=-1;side<=1;side+=2){
+    const homolog=second?ci:(side===-1?0:1),color=(homolog+pair)%2===0?0xf49ab7:0x89bfff;
+    const name=second?`Cromátide-irmã ${side===-1?'A':'B'} · célula ${ci+1} · exemplo ${pair+1}`:`Homólogo ${side===-1?'A':'B'} · par ${pair+1}`;
+    const x=second?0:side*.23;
+    const arms=second?[side]:[-1,1];
+    for(const arm of arms){
+     const mesh=tube([[x-arm*.1,y-length,.1],[x,y,.1],[x+arm*.1,y+length,.1]],.04,color,name);
+     mesh.userData.segregation={dx:side*(second?.72:.85),kind:second?'sister':'homolog',pair,cell:ci,side};
+    }
+   }
+  }
+ });
  }else if(kind==='route'){
  ball(.65,0xd5859c,'Útero',[0,-.35,0]).scale.set(.85,1.2,.5);tube([[0,-1,0],[0,-1.45,0],[0,-2,0]],.19,0xcaa1c9,'Vagina e colo uterino');
  tube([[0,.2,0],[.7,.75,0],[1.45,.85,0],[1.85,.35,0]],.13,0xf4b3b2,'Tuba uterina');ball(.35,0x9acbc3,'Ovário',[1.9,-.2,0]);
