@@ -1,3 +1,4 @@
+import { downloadStudy } from './export-study.js';
 import * as THREE from 'three';
 import { OrbitControls } from './vendor/OrbitControls.js';
 import { topics, planeText } from './content.js';
@@ -502,3 +503,12 @@ $('retry-note').onclick=()=>{if(selected)notes.load(selected);};
 $('use-server-note').onclick=()=>{if(selected)notes.useServer(selected);};
 $('keep-note').onclick=()=>{if(selected)notes.keepDraft(selected);};
 window.addEventListener('beforeunload',event=>{if(notes.hasUnsaved){event.preventDefault();event.returnValue='';}});
+
+$('export-study').onclick=async()=>{
+ const button=$('export-study'),status=$('export-status');
+ if(notes.hasUnsaved||progress.pending.length||progress.running){status.textContent='Salve suas anotações e aguarde o progresso terminar de salvar antes de exportar.';return;}
+ button.disabled=true;status.textContent='Preparando seus estudos…';
+ try{await downloadStudy();status.textContent='Arquivo preparado para download. Guarde-o em um local seguro.';}
+ catch{status.textContent='Não foi possível exportar. Confira a conexão e tente novamente.';}
+ finally{button.disabled=false;}
+};

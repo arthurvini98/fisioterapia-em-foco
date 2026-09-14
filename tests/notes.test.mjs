@@ -5,7 +5,7 @@ import {handleNotes} from '../worker/notes.js';
 import {NotesStore} from '../dist/notes.js';
 const db=new DatabaseSync(':memory:');
 for(const f of fs.readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort())db.exec(fs.readFileSync('drizzle/'+f,'utf8'));
-const env={DB:{prepare(sql){let v=[];return {bind(...args){v=args;return this;},async first(){return db.prepare(sql).get(...v);},async run(){return {meta:{changes:Number(db.prepare(sql).run(...v).changes)}};}};}}};
+const env={DB:{prepare(sql){let v=[];return {bind(...args){v=args;return this;},async all(){return {results:db.prepare(sql).all(...v)};},async first(){return db.prepare(sql).get(...v);},async run(){return {meta:{changes:Number(db.prepare(sql).run(...v).changes)}};}};}}};
 const ids=new Set(['bone','muscle']);
 const call=(user,id='bone',data,headers={})=>handleNotes(new Request('https://test.local/api/notes?structure='+id,{method:data===undefined?'GET':'PUT',headers:{...(user?{'oai-authenticated-user-id':user}:{}),'Content-Type':'application/json',...headers},...(data===undefined?{}:{body:JSON.stringify(data)})}),env,ids);
 assert.equal((await call(null)).status,401);
@@ -33,3 +33,13 @@ a.edit('bone','sent');duringSave=()=>a.edit('bone','typed while saving');assert.
 await a.save('bone');await a.save('muscle');assert.equal(a.hasUnsaved,false);
 const c=new NotesStore();fail=true;await c.load('bone');assert.equal(c.entry('bone').loaded,false);fail=false;await c.load('bone');assert.equal(c.entry('bone').text,'typed while saving');
 console.log('PASS: notes migrations, account isolation, validation, version conflicts, clearing, draft retention, offline retry and edits during save');
+
+const exportNotes=user=>handleNotes(new Request('https://test.local/api/notes?export=1',{headers:user?{'oai-authenticated-user-id':user}:{}}),env,ids);
+assert.equal((await exportNotes(null)).status,401);
+assert.deepEqual((await (await exportNotes('b')).json()).notes,[]);
+const exported=await (await exportNotes('client')).json();
+assert.equal(exported.notes.length,2);
+assert.ok(exported.notes.some(note=>note.body==='typed while saving'));
+assert.ok(exported.notes.every(note=>!Object.hasOwn(note,'user_id')));
+assert.deepEqual((await (await exportNotes('a')).json()).notes,[]);
+console.log('PASS: export contains all own notes, excludes cleared notes and other users');

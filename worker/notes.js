@@ -2,7 +2,12 @@ import { progressDB } from './progress.js';
 const noteJSON=(body,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'no-store'}});
 export async function handleNotes(request,env,validIds){
  const user=request.headers.get('oai-authenticated-user-id');if(!user)return noteJSON({error:'Entre na sua conta.'},401);
- const url=new URL(request.url),id=url.searchParams.get('structure');if(!validIds.has(id))return noteJSON({error:'Estrutura inválida.'},400);
+ const url=new URL(request.url),id=url.searchParams.get('structure');
+ if(request.method==='GET'&&url.searchParams.get('export')==='1'){
+  const rows=await progressDB(env).prepare('SELECT structure_id,body,version,updated_at FROM structure_notes WHERE user_id=? ORDER BY structure_id').bind(user).all();
+  return noteJSON({notes:(rows.results||[]).filter(note=>validIds.has(note.structure_id)&&note.body)});
+ }
+ if(!validIds.has(id))return noteJSON({error:'Estrutura inválida.'},400);
  const db=progressDB(env);
  const read=async()=>await db.prepare('SELECT body,version FROM structure_notes WHERE user_id=? AND structure_id=?').bind(user,id).first()||{body:'',version:0};
  if(request.method==='GET')return noteJSON(await read());

@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {collectStudy} from '../dist/export-study.js';
+const progress={lessons:{intro:{completedSteps:[0]}},reviews:[]};
+const notes={notes:[{structure_id:'bone',body:'Minha anotação'}]};
+const result=await collectStudy(async url=>Response.json(url.includes('notes')?notes:progress));
+assert.deepEqual(result.progress,progress);assert.deepEqual(result.notes,notes.notes);
+assert.equal(result.version,1);assert.ok(Date.parse(result.exportedAt));
+await assert.rejects(collectStudy(async()=>new Response('',{status:500})));
+await assert.rejects(collectStudy(async()=>Response.json({})));
+console.log('PASS: complete export, failed requests and invalid responses');
