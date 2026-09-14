@@ -1,3 +1,4 @@
+import {highlightPart} from './embryology-selection.js';
 import {applyMotion,motionCaption} from './embryology-motion.js';
 import * as T from './vendor/three.module.js';
 import {OrbitControls} from './vendor/OrbitControls.js';
@@ -5,9 +6,27 @@ import {buildModel} from './embryology-models.js';
 import {stages} from './embryology-data.js';
 const $=id=>document.getElementById(id);let index=0,model,scene,camera,renderer,controls,scheduled=false;
 function render(){if(!renderer||scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;renderer.render(scene,camera);});}
-function select(name){$('selection').textContent=name;for(const [label,meshes] of model.parts)for(const mesh of meshes)mesh.material.emissive.set(label===name?0x4a3220:0);render();}
+let selectedPart=null,resumeAfterSelection=false;
+function select(name){
+ if(selectedPart===name){clearSelection();return;}
+ if(!selectedPart)resumeAfterSelection=autoplay;
+ selectedPart=name;autoplay=false;pause();highlightPart(model,name);
+ $('selection').textContent=`Em destaque: ${name}. Animação pausada para observar.`;
+ $('clear-selection').hidden=false;
+ [...$('parts').children].forEach(button=>button.setAttribute('aria-pressed',String(button.textContent===name)));
+ render();
+}
+function clearSelection(){
+ if(model)highlightPart(model);
+ selectedPart=null;$('clear-selection').hidden=true;$('selection').textContent='Escolha uma estrutura para identificá-la.';
+ [...$('parts').children].forEach(button=>button.setAttribute('aria-pressed','false'));
+ autoplay=resumeAfterSelection;if(autoplay)startPlayback();render();
+}
+$('clear-selection').onclick=clearSelection;
+
 function show(){
- pause();moment=0;
+ if(selectedPart){autoplay=resumeAfterSelection;selectedPart=null;}
+ $('clear-selection').hidden=true;pause();moment=0;
  const stage=stages[index];$('title').textContent=stage.title;$('explanation').textContent=stage.text;$('observe').textContent=stage.observe;$('number').textContent=`ETAPA ${index+1} DE ${stages.length}`;
  $('prev').disabled=index===0;$('next').disabled=index===stages.length-1;
  [...$('steps').children].forEach((button,i)=>{if(i===index)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current');});
@@ -15,7 +34,7 @@ function show(){
  if(!scene)return;
  if(model){scene.remove(model.root);model.root.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}
  model=buildModel(stage.kind,$('cut').checked);scene.add(model.root);
- for(const name of model.parts.keys()){const button=document.createElement('button');button.textContent=name;button.onclick=()=>select(name);$('parts').append(button);}
+ for(const name of model.parts.keys()){const button=document.createElement('button');button.textContent=name;button.setAttribute('aria-pressed','false');button.onclick=()=>select(name);$('parts').append(button);}
  $('play').disabled=false;$('restart').disabled=false;$('timeline').disabled=false;updateMotion();
  reset();if(autoplay&&!document.hidden)startPlayback();
 }
