@@ -1,6 +1,6 @@
-export function highlightPart(model,name=null){
+export function highlightPart(model,name=null,isolate=false){
  for(const [label,meshes] of model.parts)for(const mesh of meshes){
-  const material=mesh.material;
+  const material=mesh.material;mesh.visible=!name||!isolate||label===name;
   if(!mesh.userData.originalAppearance)mesh.userData.originalAppearance={color:material.color.clone(),emissive:material.emissive.clone(),opacity:material.opacity,transparent:material.transparent,depthWrite:material.depthWrite,renderOrder:mesh.renderOrder};
   const base=mesh.userData.originalAppearance,selected=label===name;
   material.color.copy(base.color);material.emissive.copy(base.emissive);

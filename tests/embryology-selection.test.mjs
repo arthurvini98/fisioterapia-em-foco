@@ -8,3 +8,5 @@ highlightPart(model,'Zona pelúcida');assert.equal(zona.material.opacity,.94);as
 highlightPart(model,'Membrana do ovócito');assert.equal(zona.material.opacity,.07);assert.equal(membrane.material.opacity,.94);
 highlightPart(model);assert.equal(zona.material.opacity,opacity);assert.equal(zona.material.color.getHex(),color);assert.equal(zona.material.depthWrite,false);
 console.log('PASS: layer highlight, switching selection and original appearance restored');
+
+highlightPart(model,'Zona pelúcida',true);assert.equal(zona.visible,true);assert.equal(membrane.visible,false);highlightPart(model);assert.ok(model.root.children.every(mesh=>mesh.visible));
