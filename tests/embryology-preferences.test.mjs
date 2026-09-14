@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {readPreferences,savePreferences,shortcutAction} from '../dist/embryology-preferences.js';
+let value=null;const store={getItem:()=>value,setItem:(_,v)=>{value=v;}};
+assert.deepEqual(readPreferences(store),{speed:1,cut:true});
+savePreferences(store,.5,false);assert.deepEqual(readPreferences(store),{speed:.5,cut:false});
+value='{"speed":99,"cut":"false"}';assert.deepEqual(readPreferences(store),{speed:1,cut:true});
+value='broken';assert.equal(readPreferences(store).speed,1);
+assert.equal(savePreferences({setItem(){throw Error();}},1,true),false);
+assert.equal(shortcutAction({key:'ArrowRight'}),'next');
+assert.equal(shortcutAction({key:'ArrowRight',target:{closest:()=>true}}),null);
+assert.equal(shortcutAction({key:' ',ctrlKey:true}),null);
+assert.equal(shortcutAction({key:' ',repeat:true}),null);
+console.log('PASS: preferences roundtrip, invalid/blocked storage and keyboard exclusions');

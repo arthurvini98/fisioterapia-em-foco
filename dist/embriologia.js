@@ -1,3 +1,4 @@
+import {readPreferences,savePreferences,shortcutAction} from './embryology-preferences.js';
 import {stageIndex,stageLink} from './embryology-navigation.js';
 import {highlightPart} from './embryology-selection.js';
 import {applyMotion,motionCaption} from './embryology-motion.js';
@@ -6,6 +7,10 @@ import {OrbitControls} from './vendor/OrbitControls.js';
 import {buildModel} from './embryology-models.js';
 import {stages} from './embryology-data.js';
 const $=id=>document.getElementById(id);let savedStage=null;try{savedStage=localStorage.getItem('embryology-stage');}catch{}
+let preferences={speed:1,cut:true};try{preferences=readPreferences(localStorage);}catch{}
+$('speed').value=preferences.speed;$('cut').checked=preferences.cut;
+function rememberPreferences(){try{savePreferences(localStorage,Number($('speed').value),$('cut').checked);}catch{}}
+$('speed').onchange=rememberPreferences;
 let index=stageIndex(location.hash,savedStage,stages),model,scene,camera,renderer,controls,scheduled=false;
 function render(){if(!renderer||scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;renderer.render(scene,camera);});}
 let selectedPart=null,resumeAfterSelection=false,isolated=false;
@@ -44,7 +49,7 @@ function show(){
  $('link-status').textContent='';
  if(selectedPart){autoplay=resumeAfterSelection;selectedPart=null;}
  $('isolate-selection').hidden=true;isolated=false;$('clear-selection').hidden=true;pause();moment=0;
- const stage=stages[index];$('title').textContent=stage.title;$('explanation').textContent=stage.text;$('observe').textContent=stage.observe;$('number').textContent=`ETAPA ${index+1} DE ${stages.length}`;
+ const stage=stages[index];$('viewer-stage').textContent=`${index+1}/${stages.length} · ${stage.title}`;$('title').textContent=stage.title;$('explanation').textContent=stage.text;$('observe').textContent=stage.observe;$('number').textContent=`ETAPA ${index+1} DE ${stages.length}`;
  $('prev').disabled=index===0;$('next').disabled=index===stages.length-1;
  [...$('steps').children].forEach((button,i)=>{if(i===index)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current');});
  $('parts').replaceChildren();$('selection').textContent='Escolha uma estrutura para identificá-la.';
@@ -67,7 +72,7 @@ $('restart').onclick=()=>{pause();moment=0;updateMotion();if(autoplay)startPlayb
 $('timeline').oninput=()=>{autoplay=false;pause();moment=Number($('timeline').value)/1000;updateMotion();};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();else if(autoplay)startPlayback();});
 stages.forEach((stage,i)=>{const button=document.createElement('button');button.textContent=`${i+1}. ${stage.title}`;button.onclick=()=>{index=i;show();};$('steps').append(button);});
-$('prev').onclick=()=>{if(index>0){index--;show();}};$('next').onclick=()=>{if(index<stages.length-1){index++;show();}};$('cut').onchange=show;$('reset').onclick=reset;
+$('prev').onclick=()=>{if(index>0){index--;show();}};$('next').onclick=()=>{if(index<stages.length-1){index++;show();}};$('cut').onchange=()=>{rememberPreferences();show();};$('reset').onclick=reset;
 try{
  scene=new T.Scene();camera=new T.PerspectiveCamera(45,1,.01,100);renderer=new T.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));$('canvas').append(renderer.domElement);
  controls=new OrbitControls(camera,renderer.domElement);controls.zoomToCursor=true;controls.minDistance=.2;controls.maxDistance=14;controls.addEventListener('change',render);
@@ -83,3 +88,9 @@ document.addEventListener('keydown',event=>{const settings=$('viewer-settings');
 
 window.addEventListener('hashchange',()=>{index=stageIndex(location.hash,null,stages);show();});
 $('copy-stage').onclick=async()=>{try{await navigator.clipboard.writeText(stageLink(location.href,stages[index].kind));$('link-status').textContent='Link da etapa copiado.';}catch{$('link-status').textContent='Copie o endereço da página na barra do navegador: ele já aponta para esta etapa.';}};
+
+const fullscreenTarget=document.querySelector('main');
+$('fullscreen').hidden=!document.fullscreenEnabled;
+$('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await fullscreenTarget.requestFullscreen();$('viewer-settings').open=false;}catch{$('fullscreen-status').textContent='O navegador não permitiu a tela cheia.';}};
+document.addEventListener('fullscreenchange',()=>{$('fullscreen').textContent=document.fullscreenElement?'Sair da tela cheia':'Tela cheia';$('fullscreen-status').textContent='';});
+document.addEventListener('keydown',event=>{const action=shortcutAction(event);if(!action)return;const button=$(action);if(!button||button.disabled)return;event.preventDefault();button.click();});

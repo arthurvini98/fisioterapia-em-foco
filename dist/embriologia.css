@@ -7,3 +7,7 @@
 #parts button[aria-pressed="true"]{background:#ffc247;color:#172e3a;border:2px solid #785300;box-shadow:0 0 0 2px #ffc24740;font-weight:700}#clear-selection{width:100%;background:#e7f1ef}#clear-selection[hidden]{display:none}
 
 #isolate-selection{width:100%;margin-bottom:8px}#isolate-selection[hidden]{display:none}#isolate-selection[aria-pressed="true"]{background:#173947;color:white}
+
+main:fullscreen{background:#f7f9f8;overflow:auto;height:100vh;min-height:100vh}main:fullscreen #canvas{height:72vh}.settings-hint{font-size:12px;line-height:1.5;color:#536d76;margin:4px 0}.settings-panel [hidden]{display:none}#fullscreen{width:100%}#fullscreen-status:empty{display:none}@media(max-width:640px){main:fullscreen #canvas{height:52vh}}
+
+.viewer-stage{margin:0;padding:18px 76px 0 20px;font-size:13px;color:#d3e5e8;min-height:46px}
