@@ -11,3 +11,5 @@
 main:fullscreen{background:#f7f9f8;overflow:auto;height:100vh;min-height:100vh}main:fullscreen #canvas{height:72vh}.settings-hint{font-size:12px;line-height:1.5;color:#536d76;margin:4px 0}.settings-panel [hidden]{display:none}#fullscreen{width:100%}#fullscreen-status:empty{display:none}@media(max-width:640px){main:fullscreen #canvas{height:52vh}}
 
 .viewer-stage{margin:0;padding:18px 76px 0 20px;font-size:13px;color:#d3e5e8;min-height:46px}
+
+.structure-guide{margin:12px 0 18px;border-left:4px solid #e1a321;background:#fff5da;padding:15px;border-radius:8px}.structure-guide[hidden]{display:none}.structure-guide h2{margin:0 0 12px}.structure-guide dl{margin:0}.structure-guide dt{font-size:12px;font-weight:700;text-transform:uppercase;margin-top:10px}.structure-guide dd{margin:3px 0 0;font-size:14px}.structure-guide a{display:inline-block;margin-top:12px;font-size:12px}

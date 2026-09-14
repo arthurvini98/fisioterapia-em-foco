@@ -1,3 +1,4 @@
+import {structureGuide} from './embryology-guide.js';
 import {readPreferences,savePreferences,shortcutAction} from './embryology-preferences.js';
 import {stageIndex,stageLink} from './embryology-navigation.js';
 import {highlightPart} from './embryology-selection.js';
@@ -14,10 +15,15 @@ $('speed').onchange=rememberPreferences;
 let index=stageIndex(location.hash,savedStage,stages),model,scene,camera,renderer,controls,scheduled=false;
 function render(){if(!renderer||scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;renderer.render(scene,camera);});}
 let selectedPart=null,resumeAfterSelection=false,isolated=false;
+function explainSelection(name){
+ const guide=structureGuide(name,stages[index]);$('structure-guide').hidden=!guide;
+ if(!guide)return;
+ $('guide-title').textContent=name;$('guide-what').textContent=guide.what;$('guide-role').textContent=guide.role;$('guide-observe').textContent=guide.observe;$('guide-source').href=guide.source;
+}
 function select(name){
  if(selectedPart===name){clearSelection();return;}
  if(!selectedPart)resumeAfterSelection=autoplay;
- selectedPart=name;autoplay=false;pause();isolated=false;highlightPart(model,name);
+ explainSelection(name);selectedPart=name;autoplay=false;pause();isolated=false;highlightPart(model,name);
  $('isolate-selection').hidden=false;$('isolate-selection').textContent='Ver só esta estrutura';$('isolate-selection').setAttribute('aria-pressed','false');focusSelection();
  $('selection').textContent=`Em destaque: ${name}. Animação pausada para observar.`;
  $('clear-selection').hidden=false;
@@ -25,6 +31,7 @@ function select(name){
  render();
 }
 function clearSelection(){
+ $('structure-guide').hidden=true;
  if(model)highlightPart(model);
  selectedPart=null;isolated=false;$('isolate-selection').hidden=true;reset();$('clear-selection').hidden=true;$('selection').textContent='Escolha uma estrutura para identificá-la.';
  [...$('parts').children].forEach(button=>button.setAttribute('aria-pressed','false'));
@@ -44,6 +51,7 @@ function focusSelection(){
 
 
 function show(){
+ $('structure-guide').hidden=true;
  try{localStorage.setItem('embryology-stage',stages[index].kind);}catch{}
  history.replaceState(null,'',stageLink(location.href,stages[index].kind));
  $('link-status').textContent='';
