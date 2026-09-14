@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {loadingIssue} from '../dist/loading.js';
+const download=loadingIssue('download',new Error('skeleton.bin: 404'));
+assert.match(download.message,/baixar/);
+assert.doesNotMatch(download.message,/aceleração/);
+assert.match(download.diagnostic,/skeleton.bin: 404/);
+assert.match(loadingIssue('graphics',new Error()).message,/aceleração/);
+assert.doesNotMatch(loadingIssue('scene',new TypeError('Illegal invocation')).message,/conexão|aceleração/);
+assert.match(loadingIssue('geometry',null).diagnostic,/Erro sem detalhes/);
+console.log('Loading diagnostics: OK');
