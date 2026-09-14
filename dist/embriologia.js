@@ -1,3 +1,4 @@
+import {ChallengeHistory} from './embryology-history.js';
 import {structureGuide} from './embryology-guide.js';
 import {readPreferences,savePreferences,shortcutAction} from './embryology-preferences.js';
 import {stageIndex,stageLink} from './embryology-navigation.js';
@@ -14,6 +15,8 @@ function rememberPreferences(){try{savePreferences(localStorage,Number($('speed'
 $('speed').onchange=rememberPreferences;
 let index=stageIndex(location.hash,savedStage,stages),model,scene,camera,renderer,controls,scheduled=false;
 function render(){if(!renderer||scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;renderer.render(scene,camera);});}
+let historyStorage=null;try{historyStorage=localStorage;}catch{}
+const reviewHistory=new ChallengeHistory(historyStorage);
 let challenge=null,lastChallenge=null;
 let selectedPart=null,resumeAfterSelection=false,isolated=false;
 function explainSelection(name){
@@ -22,7 +25,7 @@ function explainSelection(name){
  $('guide-title').textContent=name;$('guide-what').textContent=guide.what;$('guide-role').textContent=guide.role;$('guide-observe').textContent=guide.observe;$('guide-source').href=guide.source;
 }
 function select(name){
- if(challenge&&!challenge.answered)return;
+ if(challenge)return;
  if(selectedPart===name){clearSelection();return;}
  if(!selectedPart)resumeAfterSelection=autoplay;
  explainSelection(name);selectedPart=name;autoplay=false;pause();isolated=false;highlightPart(model,name);
@@ -53,6 +56,7 @@ function focusSelection(){
 
 
 function show(){
+ renderScore();
  challenge=null;$('challenge').hidden=true;$('parts').hidden=false;$('start-challenge').hidden=false;
  $('structure-guide').hidden=true;
  try{localStorage.setItem('embryology-stage',stages[index].kind);}catch{}
@@ -106,12 +110,15 @@ $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await docume
 document.addEventListener('fullscreenchange',()=>{$('fullscreen').textContent=document.fullscreenElement?'Sair da tela cheia':'Tela cheia';$('fullscreen-status').textContent='';});
 document.addEventListener('keydown',event=>{const action=shortcutAction(event);if(!action)return;const button=$(action);if(!button||button.disabled)return;event.preventDefault();button.click();});
 
+function renderScore(){const score=reviewHistory.summary(stages[index].kind);$('challenge-score').textContent=`Nesta etapa: ${score.correct} acertos em ${score.total} respostas. ${reviewHistory.saved?'Histórico neste navegador (até 500 respostas no total).':'Histórico temporário: não foi possível salvar neste navegador.'}`;}
 function startChallenge(){
  if(!model)return;
  const candidates=[...model.parts.keys()].filter(name=>structureGuide(name,stages[index])&&!name.startsWith('Homólogo')&&!name.startsWith('Cromátide'));
  if(candidates.length<3){$('selection').textContent='Nesta etapa, explore os movimentos. A revisão visual está disponível nas etapas de célula e fertilização.';return;}
  if(selectedPart)clearSelection();
- const pool=candidates.filter(name=>name!==lastChallenge),answer=pool[Math.floor(Math.random()*pool.length)];lastChallenge=answer;
+ const eligible=$('review-mistakes').checked?candidates.filter(name=>reviewHistory.mistakes(stages[index].kind).includes(name)):candidates;
+ if(!eligible.length){$('challenge-feedback').textContent='Nenhum erro pendente nesta etapa. Desmarque a opção para praticar todas as estruturas.';$('selection').textContent='Nenhum erro pendente nesta etapa.';return;}
+ const alternatives=eligible.filter(name=>name!==lastChallenge),pool=alternatives.length?alternatives:eligible,answer=pool[Math.floor(Math.random()*pool.length)];lastChallenge=answer;
  const shuffled=candidates.filter(name=>name!==answer);
  for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
  const options=shuffled.slice(0,2);options.splice(Math.floor(Math.random()*3),0,answer);
@@ -119,7 +126,7 @@ function startChallenge(){
  $('parts').hidden=true;$('start-challenge').hidden=true;$('structure-guide').hidden=true;$('challenge').hidden=false;$('challenge-next').hidden=true;$('challenge-feedback').textContent='Observe o modelo e escolha uma opção.';$('selection').textContent='Você pode girar e aproximar o modelo antes de responder.';
  $('challenge-options').replaceChildren();
  for(const name of options){const button=document.createElement('button');button.textContent=name;button.onclick=()=>{
- if(challenge.answered)return;challenge.answered=true;
+ if(challenge.answered)return;challenge.answered=true;reviewHistory.record(stages[index].kind,answer,name===answer);renderScore();
  [...$('challenge-options').children].forEach(option=>{option.disabled=true;option.classList.toggle('correct',option.textContent===answer);});
  $('challenge-feedback').textContent=name===answer?'Acertou! Veja a explicação abaixo.':`A resposta é ${answer}. Compare com a explicação abaixo.`;
  explainSelection(answer);$('challenge-next').hidden=false;

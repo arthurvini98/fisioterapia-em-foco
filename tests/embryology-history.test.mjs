@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {ChallengeHistory} from '../dist/embryology-history.js';
+let data='[]';const storage={getItem:()=>data,setItem:(_,v)=>{data=v;}};
+const history=new ChallengeHistory(storage);history.record('cell','Núcleo',false);history.record('fusion','Zona',false);
+assert.deepEqual(history.mistakes('cell'),['Núcleo']);history.record('cell','Núcleo',true);assert.deepEqual(history.mistakes('cell'),[]);
+assert.deepEqual(new ChallengeHistory(storage).summary('cell'),{total:2,correct:1});
+const blocked=new ChallengeHistory(null);blocked.record('cell','Núcleo',true);assert.equal(blocked.saved,false);assert.equal(blocked.summary('cell').total,1);
+for(let i=0;i<501;i++)history.record('cell','Núcleo',true);assert.equal(history.events.length,500);
+data='[null,{"stage":"x"}]';assert.equal(new ChallengeHistory(storage).events.length,0);
+console.log('PASS: persisted score, latest-answer mistakes, stage isolation, bounds and blocked storage');
