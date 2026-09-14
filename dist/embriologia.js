@@ -1,3 +1,4 @@
+import {LessonCompletion} from './embryology-completion.js';
 import {ChallengeHistory} from './embryology-history.js';
 import {structureGuide} from './embryology-guide.js';
 import {readPreferences,savePreferences,shortcutAction} from './embryology-preferences.js';
@@ -17,6 +18,7 @@ let index=stageIndex(location.hash,savedStage,stages),model,scene,camera,rendere
 function render(){if(!renderer||scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;renderer.render(scene,camera);});}
 let historyStorage=null;try{historyStorage=localStorage;}catch{}
 const reviewHistory=new ChallengeHistory(historyStorage);
+const completion=new LessonCompletion(historyStorage,stages.map(stage=>stage.kind));
 let challenge=null,lastChallenge=null;
 let selectedPart=null,resumeAfterSelection=false,isolated=false;
 function explainSelection(name){
@@ -56,7 +58,7 @@ function focusSelection(){
 
 
 function show(){
- renderScore();
+ renderCompletion();renderScore();
  challenge=null;$('challenge').hidden=true;$('parts').hidden=false;$('start-challenge').hidden=false;
  $('structure-guide').hidden=true;
  try{localStorage.setItem('embryology-stage',stages[index].kind);}catch{}
@@ -134,3 +136,13 @@ function startChallenge(){
  render();
 }
 $('start-challenge').onclick=startChallenge;$('challenge-next').onclick=startChallenge;$('challenge-exit').onclick=show;
+
+function renderCompletion(){
+ const done=completion.done.has(stages[index].kind);$('complete-stage').textContent=done?'✓ Etapa concluída · desfazer':'Marcar etapa como concluída';$('complete-stage').setAttribute('aria-pressed',String(done));
+ $('completion-summary').textContent=`${completion.done.size} de ${stages.length} etapas concluídas. ${completion.saved?'Salvo neste navegador.':'Não foi possível salvar; mantenha esta página aberta.'}`;
+ [...$('steps').children].forEach((button,i)=>{button.textContent=`${completion.done.has(stages[i].kind)?'✓ ':''}${i+1}. ${stages[i].title}`;});
+}
+$('complete-stage').onclick=()=>{completion.toggle(stages[index].kind);renderCompletion();};
+$('export-embryology').onclick=()=>{
+ try{const data=completion.export(stages[index].kind,reviewHistory.events);const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download=`embriologia-estudos-${data.exportedAt.slice(0,10)}.json`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);$('export-embryology-status').textContent='Arquivo preparado. A importação ainda não está disponível.';}catch{$('export-embryology-status').textContent='Não foi possível preparar o arquivo. Tente novamente.';}
+};
