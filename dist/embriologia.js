@@ -1,10 +1,12 @@
+import {stageIndex,stageLink} from './embryology-navigation.js';
 import {highlightPart} from './embryology-selection.js';
 import {applyMotion,motionCaption} from './embryology-motion.js';
 import * as T from './vendor/three.module.js';
 import {OrbitControls} from './vendor/OrbitControls.js';
 import {buildModel} from './embryology-models.js';
 import {stages} from './embryology-data.js';
-const $=id=>document.getElementById(id);let index=0,model,scene,camera,renderer,controls,scheduled=false;
+const $=id=>document.getElementById(id);let savedStage=null;try{savedStage=localStorage.getItem('embryology-stage');}catch{}
+let index=stageIndex(location.hash,savedStage,stages),model,scene,camera,renderer,controls,scheduled=false;
 function render(){if(!renderer||scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;renderer.render(scene,camera);});}
 let selectedPart=null,resumeAfterSelection=false,isolated=false;
 function select(name){
@@ -37,6 +39,9 @@ function focusSelection(){
 
 
 function show(){
+ try{localStorage.setItem('embryology-stage',stages[index].kind);}catch{}
+ history.replaceState(null,'',stageLink(location.href,stages[index].kind));
+ $('link-status').textContent='';
  if(selectedPart){autoplay=resumeAfterSelection;selectedPart=null;}
  $('isolate-selection').hidden=true;isolated=false;$('clear-selection').hidden=true;pause();moment=0;
  const stage=stages[index];$('title').textContent=stage.title;$('explanation').textContent=stage.text;$('observe').textContent=stage.observe;$('number').textContent=`ETAPA ${index+1} DE ${stages.length}`;
@@ -75,3 +80,6 @@ show();
 
 document.addEventListener('pointerdown',event=>{const settings=$('viewer-settings');if(settings.open&&!settings.contains(event.target))settings.open=false;});
 document.addEventListener('keydown',event=>{const settings=$('viewer-settings');if(event.key==='Escape'&&settings.open){settings.open=false;settings.querySelector('summary').focus();}});
+
+window.addEventListener('hashchange',()=>{index=stageIndex(location.hash,null,stages);show();});
+$('copy-stage').onclick=async()=>{try{await navigator.clipboard.writeText(stageLink(location.href,stages[index].kind));$('link-status').textContent='Link da etapa copiado.';}catch{$('link-status').textContent='Copie o endereço da página na barra do navegador: ele já aponta para esta etapa.';}};
