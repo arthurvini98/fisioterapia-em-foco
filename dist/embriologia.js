@@ -14,6 +14,7 @@ function rememberPreferences(){try{savePreferences(localStorage,Number($('speed'
 $('speed').onchange=rememberPreferences;
 let index=stageIndex(location.hash,savedStage,stages),model,scene,camera,renderer,controls,scheduled=false;
 function render(){if(!renderer||scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;renderer.render(scene,camera);});}
+let challenge=null,lastChallenge=null;
 let selectedPart=null,resumeAfterSelection=false,isolated=false;
 function explainSelection(name){
  const guide=structureGuide(name,stages[index]);$('structure-guide').hidden=!guide;
@@ -21,6 +22,7 @@ function explainSelection(name){
  $('guide-title').textContent=name;$('guide-what').textContent=guide.what;$('guide-role').textContent=guide.role;$('guide-observe').textContent=guide.observe;$('guide-source').href=guide.source;
 }
 function select(name){
+ if(challenge&&!challenge.answered)return;
  if(selectedPart===name){clearSelection();return;}
  if(!selectedPart)resumeAfterSelection=autoplay;
  explainSelection(name);selectedPart=name;autoplay=false;pause();isolated=false;highlightPart(model,name);
@@ -51,6 +53,7 @@ function focusSelection(){
 
 
 function show(){
+ challenge=null;$('challenge').hidden=true;$('parts').hidden=false;$('start-challenge').hidden=false;
  $('structure-guide').hidden=true;
  try{localStorage.setItem('embryology-stage',stages[index].kind);}catch{}
  history.replaceState(null,'',stageLink(location.href,stages[index].kind));
@@ -102,3 +105,25 @@ $('fullscreen').hidden=!document.fullscreenEnabled;
 $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await fullscreenTarget.requestFullscreen();$('viewer-settings').open=false;}catch{$('fullscreen-status').textContent='O navegador não permitiu a tela cheia.';}};
 document.addEventListener('fullscreenchange',()=>{$('fullscreen').textContent=document.fullscreenElement?'Sair da tela cheia':'Tela cheia';$('fullscreen-status').textContent='';});
 document.addEventListener('keydown',event=>{const action=shortcutAction(event);if(!action)return;const button=$(action);if(!button||button.disabled)return;event.preventDefault();button.click();});
+
+function startChallenge(){
+ if(!model)return;
+ const candidates=[...model.parts.keys()].filter(name=>structureGuide(name,stages[index])&&!name.startsWith('Homólogo')&&!name.startsWith('Cromátide'));
+ if(candidates.length<3){$('selection').textContent='Nesta etapa, explore os movimentos. A revisão visual está disponível nas etapas de célula e fertilização.';return;}
+ if(selectedPart)clearSelection();
+ const pool=candidates.filter(name=>name!==lastChallenge),answer=pool[Math.floor(Math.random()*pool.length)];lastChallenge=answer;
+ const shuffled=candidates.filter(name=>name!==answer);
+ for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
+ const options=shuffled.slice(0,2);options.splice(Math.floor(Math.random()*3),0,answer);
+ challenge={answer,answered:false};autoplay=false;pause();highlightPart(model,answer);reset();
+ $('parts').hidden=true;$('start-challenge').hidden=true;$('structure-guide').hidden=true;$('challenge').hidden=false;$('challenge-next').hidden=true;$('challenge-feedback').textContent='Observe o modelo e escolha uma opção.';$('selection').textContent='Você pode girar e aproximar o modelo antes de responder.';
+ $('challenge-options').replaceChildren();
+ for(const name of options){const button=document.createElement('button');button.textContent=name;button.onclick=()=>{
+ if(challenge.answered)return;challenge.answered=true;
+ [...$('challenge-options').children].forEach(option=>{option.disabled=true;option.classList.toggle('correct',option.textContent===answer);});
+ $('challenge-feedback').textContent=name===answer?'Acertou! Veja a explicação abaixo.':`A resposta é ${answer}. Compare com a explicação abaixo.`;
+ explainSelection(answer);$('challenge-next').hidden=false;
+ };$('challenge-options').append(button);}
+ render();
+}
+$('start-challenge').onclick=startChallenge;$('challenge-next').onclick=startChallenge;$('challenge-exit').onclick=show;
