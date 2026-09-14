@@ -19,3 +19,5 @@ main:fullscreen{background:#f7f9f8;overflow:auto;height:100vh;min-height:100vh}m
 .review-filter{display:block;font-size:13px;margin:10px 0 14px}.review-filter input{accent-color:#173947}
 
 #complete-stage{width:100%;margin-top:14px}#complete-stage[aria-pressed="true"]{background:#d8eee0;border-color:#5c9270}#completion-summary{margin-bottom:12px}#export-embryology{width:100%;margin-bottom:8px}
+
+#import-study{display:block;width:100%;font-size:12px;margin:8px 0}#apply-import{width:100%;margin-bottom:12px}

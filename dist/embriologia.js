@@ -1,3 +1,4 @@
+import {parseStudy,mergeStudy} from './embryology-import.js';
 import {LessonCompletion} from './embryology-completion.js';
 import {ChallengeHistory} from './embryology-history.js';
 import {structureGuide} from './embryology-guide.js';
@@ -144,5 +145,23 @@ function renderCompletion(){
 }
 $('complete-stage').onclick=()=>{completion.toggle(stages[index].kind);renderCompletion();};
 $('export-embryology').onclick=()=>{
- try{const data=completion.export(stages[index].kind,reviewHistory.events);const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download=`embriologia-estudos-${data.exportedAt.slice(0,10)}.json`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);$('export-embryology-status').textContent='Arquivo preparado. A importação ainda não está disponível.';}catch{$('export-embryology-status').textContent='Não foi possível preparar o arquivo. Tente novamente.';}
+ try{const data=completion.export(stages[index].kind,reviewHistory.events);const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download=`embriologia-estudos-${data.exportedAt.slice(0,10)}.json`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);$('export-embryology-status').textContent='Arquivo preparado. Você pode importá-lo pela engrenagem em outro navegador.';}catch{$('export-embryology-status').textContent='Não foi possível preparar o arquivo. Tente novamente.';}
+};
+
+let pendingImport=null,importRequest=0;
+$('import-study').onchange=async()=>{
+ const request=++importRequest;pendingImport=null;$('apply-import').hidden=true;
+ const file=$('import-study').files[0];if(!file)return;
+ try{if(file.size>250000)throw Error();const data=parseStudy(await file.text(),stages.map(s=>s.kind));if(request!==importRequest)return;pendingImport=data;
+ $('import-status').textContent=`Arquivo válido: ${data.completedStages.length} etapas concluídas e ${data.reviews.length} respostas. As conclusões serão combinadas. O histórico só será recuperado nas etapas sem respostas neste navegador, evitando duplicações. Limite total: 500 respostas.`;$('apply-import').hidden=false;
+ }catch{if(request===importRequest)$('import-status').textContent='Arquivo inválido. Selecione um JSON exportado pelo módulo de embriologia (até 250 KB).';}
+};
+$('apply-import').onclick=()=>{
+ if(!pendingImport)return;
+ const merged=mergeStudy(completion.done,reviewHistory.events,pendingImport);
+ completion.done=new Set(merged.done);reviewHistory.events=merged.events;
+ try{if(!historyStorage)throw Error();historyStorage.setItem('embryology-completed',JSON.stringify(merged.done));completion.saved=true;}catch{completion.saved=false;}
+ try{if(!historyStorage)throw Error();historyStorage.setItem('embryology-review',JSON.stringify(merged.events));reviewHistory.saved=true;}catch{reviewHistory.saved=false;}
+ pendingImport=null;$('apply-import').hidden=true;$('import-study').value='';renderCompletion();renderScore();
+ $('import-status').textContent=completion.saved&&reviewHistory.saved?'Estudos importados e salvos neste navegador.':'Dados carregados nesta sessão, mas parte não pôde ser salva. Baixe uma cópia antes de fechar.';
 };
