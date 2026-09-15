@@ -21,3 +21,5 @@ main:fullscreen{background:#f7f9f8;overflow:auto;height:100vh;min-height:100vh}m
 #complete-stage{width:100%;margin-top:14px}#complete-stage[aria-pressed="true"]{background:#d8eee0;border-color:#5c9270}#completion-summary{margin-bottom:12px}#export-embryology{width:100%;margin-bottom:8px}
 
 #import-study{display:block;width:100%;font-size:12px;margin:8px 0}#apply-import{width:100%;margin-bottom:12px}
+
+#mistake-panel{margin:12px 0;padding:12px;border:1px solid #d9e3e2;border-radius:8px}#mistake-panel[hidden]{display:none}#mistake-list{display:grid;gap:8px;margin-top:10px}#mistake-list button{text-align:left;font-size:13px}

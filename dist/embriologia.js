@@ -60,6 +60,7 @@ function focusSelection(){
 
 
 function show(){
+ $('mistake-panel').hidden=false;
  renderCompletion();renderScore();
  challenge=null;$('challenge').hidden=true;$('parts').hidden=false;$('start-challenge').hidden=false;
  $('structure-guide').hidden=true;
@@ -114,7 +115,7 @@ $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await docume
 document.addEventListener('fullscreenchange',()=>{$('fullscreen').textContent=document.fullscreenElement?'Sair da tela cheia':'Tela cheia';$('fullscreen-status').textContent='';});
 document.addEventListener('keydown',event=>{const action=shortcutAction(event);if(!action)return;const button=$(action);if(!button||button.disabled)return;event.preventDefault();button.click();});
 
-function renderScore(){const score=reviewHistory.summary(stages[index].kind);$('challenge-score').textContent=`Nesta etapa: ${score.correct} acertos em ${score.total} respostas. ${reviewHistory.saved?'Histórico neste navegador (até 500 respostas no total).':'Histórico temporário: não foi possível salvar neste navegador.'}`;}
+function renderScore(){renderMistakes();const score=reviewHistory.summary(stages[index].kind);$('challenge-score').textContent=`Nesta etapa: ${score.correct} acertos em ${score.total} respostas. ${reviewHistory.saved?'Histórico neste navegador (até 500 respostas no total).':'Histórico temporário: não foi possível salvar neste navegador.'}`;}
 function startChallenge(){
  if(!model)return;
  const candidates=[...model.parts.keys()].filter(name=>structureGuide(name,stages[index])&&!name.startsWith('Homólogo')&&!name.startsWith('Cromátide'));
@@ -127,13 +128,13 @@ function startChallenge(){
  for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
  const options=shuffled.slice(0,2);options.splice(Math.floor(Math.random()*3),0,answer);
  challenge={answer,answered:false};autoplay=false;pause();highlightPart(model,answer);reset();
- $('parts').hidden=true;$('start-challenge').hidden=true;$('structure-guide').hidden=true;$('challenge').hidden=false;$('challenge-next').hidden=true;$('challenge-feedback').textContent='Observe o modelo e escolha uma opção.';$('selection').textContent='Você pode girar e aproximar o modelo antes de responder.';
+ $('mistake-panel').hidden=true;$('parts').hidden=true;$('start-challenge').hidden=true;$('structure-guide').hidden=true;$('challenge').hidden=false;$('challenge-next').hidden=true;$('challenge-feedback').textContent='Observe o modelo e escolha uma opção.';$('selection').textContent='Você pode girar e aproximar o modelo antes de responder.';
  $('challenge-options').replaceChildren();
  for(const name of options){const button=document.createElement('button');button.textContent=name;button.onclick=()=>{
  if(challenge.answered)return;challenge.answered=true;reviewHistory.record(stages[index].kind,answer,name===answer);renderScore();
  [...$('challenge-options').children].forEach(option=>{option.disabled=true;option.classList.toggle('correct',option.textContent===answer);});
  $('challenge-feedback').textContent=name===answer?'Acertou! Veja a explicação abaixo.':`A resposta é ${answer}. Compare com a explicação abaixo.`;
- explainSelection(answer);$('challenge-next').hidden=false;
+ explainSelection(answer);$('mistake-panel').hidden=false;$('challenge-next').hidden=false;
  };$('challenge-options').append(button);}
  render();
 }
@@ -172,4 +173,11 @@ function changeCut(){
  const previous=model;
  model=modelAtMoment(stages[index].kind,$('cut').checked,moment,challenge?challenge.answer:selectedPart,challenge?false:isolated);
  scene.remove(previous.root);scene.add(model.root);disposeModel(previous);render();
+}
+
+function renderMistakes(){
+ const mistakes=reviewHistory.mistakes(stages[index].kind).filter(name=>structureGuide(name,stages[index]));
+ $('mistake-summary').textContent=`Pontos para revisar · ${mistakes.length}`;$('mistake-list').replaceChildren();
+ if(!mistakes.length){const p=document.createElement('p');p.className='settings-hint';p.textContent=reviewHistory.summary(stages[index].kind).total?'Nenhum erro pendente nesta etapa.':'Responda aos desafios para descobrir quais estruturas revisar.';$('mistake-list').append(p);return;}
+ for(const name of mistakes){const button=document.createElement('button');button.textContent=`Revisar: ${name}`;button.onclick=()=>{show();if(model?.parts.has(name))select(name);};$('mistake-list').append(button);}
 }
