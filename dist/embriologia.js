@@ -60,6 +60,7 @@ function focusSelection(){
 
 
 function show(){
+ $('meiosis-moments').hidden=!stages[index].kind.startsWith('meiosis');
  roundAnswers=0;roundCorrect=0;$('round-status').textContent='';
  $('mistake-panel').hidden=false;
  renderCompletion();renderScore();
@@ -84,7 +85,7 @@ function show(){
 function reset(){if(!camera)return;camera.position.set(0,0,7.5);controls.target.set(0,0,0);controls.update();render();}
 let playing=false,moment=0,lastTime=null,frame=null;
 let autoplay=!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-function updateMotion(){if(!model)return;applyMotion(model,stages[index].kind,moment);$('timeline').value=Math.round(moment*1000);$('motion-caption').textContent=motionCaption(stages[index].kind,moment);render();}
+function updateMotion(){if(!model)return;applyMotion(model,stages[index].kind,moment);$('timeline').value=Math.round(moment*1000);$('motion-caption').textContent=motionCaption(stages[index].kind,moment);document.querySelectorAll('[data-moment]').forEach(button=>{button.disabled=!model;button.setAttribute('aria-pressed',String(!playing&&Math.abs(moment-Number(button.dataset.moment))<.001));});render();}
 function pause(){playing=false;lastTime=null;if(frame!==null)cancelAnimationFrame(frame);frame=null;$('play').textContent='Reproduzir';}
 function tick(now){if(!playing)return;if(lastTime!==null)moment=(moment+Math.min(now-lastTime,100)/7000*Number($('speed').value))%1;lastTime=now;updateMotion();frame=requestAnimationFrame(tick);}
 function startPlayback(){if(playing||!model)return;if(moment>=1)moment=0;playing=true;lastTime=null;$('play').textContent='Pausar';frame=requestAnimationFrame(tick);}
@@ -192,3 +193,7 @@ function finishRound(){
  $('challenge-next').hidden=false;$('challenge-next').textContent='Nova rodada';$('mistake-panel').hidden=false;
  if(model)highlightPart(model);render();
 }
+
+document.querySelectorAll('[data-moment]').forEach(button=>{button.onclick=()=>{
+ if(!model)return;autoplay=false;if(selectedPart)resumeAfterSelection=false;pause();moment=Number(button.dataset.moment);updateMotion();if(selectedPart)focusSelection();
+};});
