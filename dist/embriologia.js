@@ -1,3 +1,4 @@
+import {modelAtMoment,disposeModel} from './embryology-view.js';
 import {parseStudy,mergeStudy} from './embryology-import.js';
 import {LessonCompletion} from './embryology-completion.js';
 import {ChallengeHistory} from './embryology-history.js';
@@ -90,7 +91,7 @@ $('restart').onclick=()=>{pause();moment=0;updateMotion();if(autoplay)startPlayb
 $('timeline').oninput=()=>{autoplay=false;pause();moment=Number($('timeline').value)/1000;updateMotion();};
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();else if(autoplay)startPlayback();});
 stages.forEach((stage,i)=>{const button=document.createElement('button');button.textContent=`${i+1}. ${stage.title}`;button.onclick=()=>{index=i;show();};$('steps').append(button);});
-$('prev').onclick=()=>{if(index>0){index--;show();}};$('next').onclick=()=>{if(index<stages.length-1){index++;show();}};$('cut').onchange=()=>{rememberPreferences();show();};$('reset').onclick=reset;
+$('prev').onclick=()=>{if(index>0){index--;show();}};$('next').onclick=()=>{if(index<stages.length-1){index++;show();}};$('cut').onchange=()=>{rememberPreferences();changeCut();};$('reset').onclick=reset;
 try{
  scene=new T.Scene();camera=new T.PerspectiveCamera(45,1,.01,100);renderer=new T.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));$('canvas').append(renderer.domElement);
  controls=new OrbitControls(camera,renderer.domElement);controls.zoomToCursor=true;controls.minDistance=.2;controls.maxDistance=14;controls.addEventListener('change',render);
@@ -165,3 +166,10 @@ $('apply-import').onclick=()=>{
  pendingImport=null;$('apply-import').hidden=true;$('import-study').value='';renderCompletion();renderScore();
  $('import-status').textContent=completion.saved&&reviewHistory.saved?'Estudos importados e salvos neste navegador.':'Dados carregados nesta sessão, mas parte não pôde ser salva. Baixe uma cópia antes de fechar.';
 };
+
+function changeCut(){
+ if(!model||!scene)return;
+ const previous=model;
+ model=modelAtMoment(stages[index].kind,$('cut').checked,moment,challenge?challenge.answer:selectedPart,challenge?false:isolated);
+ scene.remove(previous.root);scene.add(model.root);disposeModel(previous);render();
+}
