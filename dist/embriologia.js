@@ -21,7 +21,7 @@ function render(){if(!renderer||scheduled)return;scheduled=true;requestAnimation
 let historyStorage=null;try{historyStorage=localStorage;}catch{}
 const reviewHistory=new ChallengeHistory(historyStorage);
 const completion=new LessonCompletion(historyStorage,stages.map(stage=>stage.kind));
-let challenge=null,lastChallenge=null;
+let challenge=null,lastChallenge=null,roundAnswers=0,roundCorrect=0;
 let selectedPart=null,resumeAfterSelection=false,isolated=false;
 function explainSelection(name){
  const guide=structureGuide(name,stages[index]);$('structure-guide').hidden=!guide;
@@ -60,6 +60,7 @@ function focusSelection(){
 
 
 function show(){
+ roundAnswers=0;roundCorrect=0;$('round-status').textContent='';
  $('mistake-panel').hidden=false;
  renderCompletion();renderScore();
  challenge=null;$('challenge').hidden=true;$('parts').hidden=false;$('start-challenge').hidden=false;
@@ -118,27 +119,29 @@ document.addEventListener('keydown',event=>{const action=shortcutAction(event);i
 function renderScore(){renderMistakes();const score=reviewHistory.summary(stages[index].kind);$('challenge-score').textContent=`Nesta etapa: ${score.correct} acertos em ${score.total} respostas. ${reviewHistory.saved?'Histórico neste navegador (até 500 respostas no total).':'Histórico temporário: não foi possível salvar neste navegador.'}`;}
 function startChallenge(){
  if(!model)return;
+ if(roundAnswers>=5){finishRound();return;}
  const candidates=[...model.parts.keys()].filter(name=>structureGuide(name,stages[index])&&!name.startsWith('Homólogo')&&!name.startsWith('Cromátide'));
  if(candidates.length<3){$('selection').textContent='Nesta etapa, explore os movimentos. A revisão visual está disponível nas etapas de célula e fertilização.';return;}
  if(selectedPart)clearSelection();
  const eligible=$('review-mistakes').checked?candidates.filter(name=>reviewHistory.mistakes(stages[index].kind).includes(name)):candidates;
- if(!eligible.length){$('challenge-feedback').textContent='Nenhum erro pendente nesta etapa. Desmarque a opção para praticar todas as estruturas.';$('selection').textContent='Nenhum erro pendente nesta etapa.';return;}
+ if(!eligible.length){if(roundAnswers){finishRound();return;}$('challenge-feedback').textContent='Nenhum erro pendente nesta etapa. Desmarque a opção para praticar todas as estruturas.';$('selection').textContent='Nenhum erro pendente nesta etapa.';return;}
  const alternatives=eligible.filter(name=>name!==lastChallenge),pool=alternatives.length?alternatives:eligible,answer=pool[Math.floor(Math.random()*pool.length)];lastChallenge=answer;
  const shuffled=candidates.filter(name=>name!==answer);
  for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
  const options=shuffled.slice(0,2);options.splice(Math.floor(Math.random()*3),0,answer);
+ $('challenge-title').textContent='Identifique a estrutura em amarelo';$('round-status').textContent=`Pergunta ${roundAnswers+1} de 5 · ${roundCorrect} acertos nesta rodada`;$('challenge-next').textContent='Próxima pergunta';
  challenge={answer,answered:false};autoplay=false;pause();highlightPart(model,answer);reset();
  $('mistake-panel').hidden=true;$('parts').hidden=true;$('start-challenge').hidden=true;$('structure-guide').hidden=true;$('challenge').hidden=false;$('challenge-next').hidden=true;$('challenge-feedback').textContent='Observe o modelo e escolha uma opção.';$('selection').textContent='Você pode girar e aproximar o modelo antes de responder.';
  $('challenge-options').replaceChildren();
  for(const name of options){const button=document.createElement('button');button.textContent=name;button.onclick=()=>{
- if(challenge.answered)return;challenge.answered=true;reviewHistory.record(stages[index].kind,answer,name===answer);renderScore();
+ if(challenge.answered)return;challenge.answered=true;roundAnswers++;if(name===answer)roundCorrect++;reviewHistory.record(stages[index].kind,answer,name===answer);renderScore();
  [...$('challenge-options').children].forEach(option=>{option.disabled=true;option.classList.toggle('correct',option.textContent===answer);});
  $('challenge-feedback').textContent=name===answer?'Acertou! Veja a explicação abaixo.':`A resposta é ${answer}. Compare com a explicação abaixo.`;
- explainSelection(answer);$('mistake-panel').hidden=false;$('challenge-next').hidden=false;
+ explainSelection(answer);$('mistake-panel').hidden=false;$('challenge-next').hidden=false;if(roundAnswers===5)$('challenge-next').textContent='Ver resultado';
  };$('challenge-options').append(button);}
  render();
 }
-$('start-challenge').onclick=startChallenge;$('challenge-next').onclick=startChallenge;$('challenge-exit').onclick=show;
+$('start-challenge').onclick=()=>{roundAnswers=0;roundCorrect=0;startChallenge();};$('challenge-next').onclick=()=>{if(challenge&&roundAnswers>=5){finishRound();return;}if(!challenge){roundAnswers=0;roundCorrect=0;}startChallenge();};$('challenge-exit').onclick=show;
 
 function renderCompletion(){
  const done=completion.done.has(stages[index].kind);$('complete-stage').textContent=done?'✓ Etapa concluída · desfazer':'Marcar etapa como concluída';$('complete-stage').setAttribute('aria-pressed',String(done));
@@ -180,4 +183,12 @@ function renderMistakes(){
  $('mistake-summary').textContent=`Pontos para revisar · ${mistakes.length}`;$('mistake-list').replaceChildren();
  if(!mistakes.length){const p=document.createElement('p');p.className='settings-hint';p.textContent=reviewHistory.summary(stages[index].kind).total?'Nenhum erro pendente nesta etapa.':'Responda aos desafios para descobrir quais estruturas revisar.';$('mistake-list').append(p);return;}
  for(const name of mistakes){const button=document.createElement('button');button.textContent=`Revisar: ${name}`;button.onclick=()=>{show();if(model?.parts.has(name))select(name);};$('mistake-list').append(button);}
+}
+
+function finishRound(){
+ $('challenge-title').textContent='Resultado da rodada';
+ challenge=null;$('challenge-options').replaceChildren();$('structure-guide').hidden=true;
+ $('round-status').textContent='Rodada concluída';$('challenge-feedback').textContent=`Você acertou ${roundCorrect} de ${roundAnswers} perguntas. Consulte os pontos para revisar abaixo ou comece uma nova rodada.`;
+ $('challenge-next').hidden=false;$('challenge-next').textContent='Nova rodada';$('mistake-panel').hidden=false;
+ if(model)highlightPart(model);render();
 }
