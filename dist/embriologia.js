@@ -145,8 +145,9 @@ function startChallenge(){
 $('start-challenge').onclick=()=>{roundAnswers=0;roundCorrect=0;startChallenge();};$('challenge-next').onclick=()=>{if(challenge&&roundAnswers>=5){finishRound();return;}if(!challenge){roundAnswers=0;roundCorrect=0;}startChallenge();};$('challenge-exit').onclick=show;
 
 function renderCompletion(){
+ const pending=completion.nextPending(stages[index].kind);$('continue-study').hidden=pending===null||pending===stages[index].kind;$('continue-study').textContent=pending?`Continuar estudos: ${stages.find(stage=>stage.kind===pending).title}`:'Todas as etapas concluídas';
  const done=completion.done.has(stages[index].kind);$('complete-stage').textContent=done?'✓ Etapa concluída · desfazer':'Marcar etapa como concluída';$('complete-stage').setAttribute('aria-pressed',String(done));
- $('completion-summary').textContent=`${completion.done.size} de ${stages.length} etapas concluídas. ${completion.saved?'Salvo neste navegador.':'Não foi possível salvar; mantenha esta página aberta.'}`;
+ $('completion-summary').textContent=`${completion.done.size===stages.length?'Percurso concluído! Você pode revisitar qualquer etapa. ':''}${completion.done.size} de ${stages.length} etapas concluídas. ${completion.saved?'Salvo neste navegador.':'Não foi possível salvar; mantenha esta página aberta.'}`;
  [...$('steps').children].forEach((button,i)=>{button.textContent=`${completion.done.has(stages[i].kind)?'✓ ':''}${i+1}. ${stages[i].title}`;});
 }
 $('complete-stage').onclick=()=>{completion.toggle(stages[index].kind);renderCompletion();};
@@ -197,3 +198,5 @@ function finishRound(){
 document.querySelectorAll('[data-moment]').forEach(button=>{button.onclick=()=>{
  if(!model)return;autoplay=false;if(selectedPart)resumeAfterSelection=false;pause();moment=Number(button.dataset.moment);updateMotion();if(selectedPart)focusSelection();
 };});
+
+$('continue-study').onclick=()=>{const pending=completion.nextPending(stages[index].kind);if(pending===null)return;index=stages.findIndex(stage=>stage.kind===pending);show();$('title').focus({preventScroll:true});};

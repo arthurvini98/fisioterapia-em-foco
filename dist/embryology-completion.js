@@ -1,5 +1,6 @@
 export class LessonCompletion{
  constructor(storage,ids){this.storage=storage;this.ids=new Set(ids);this.done=new Set();this.saved=true;try{const data=JSON.parse(storage?.getItem('embryology-completed')||'[]');if(Array.isArray(data))this.done=new Set(data.filter(id=>this.ids.has(id)));}catch{this.saved=false;}}
  toggle(id){if(!this.ids.has(id))return;if(this.done.has(id))this.done.delete(id);else this.done.add(id);try{if(!this.storage)throw Error();this.storage.setItem('embryology-completed',JSON.stringify([...this.done]));this.saved=true;}catch{this.saved=false;}}
+ nextPending(currentId){const ids=[...this.ids],start=ids.indexOf(currentId);for(let step=1;step<=ids.length;step++){const id=ids[(start+step)%ids.length];if(!this.done.has(id))return id;}return null;}
  export(currentStage,reviews){return {format:'embryology-study',version:1,exportedAt:new Date().toISOString(),currentStage,completedStages:[...this.done],reviews:reviews.map(event=>({...event}))};}
 }
