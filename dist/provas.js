@@ -21,7 +21,7 @@ function checklist(){
 }
 function render(){
  $('round-end').hidden=true;renderId++;const c=queue[position];$('empty').hidden=!!c;$('card').hidden=!c;
- $('save-status').textContent='';checklist();if(!c){$('topic-kicker').textContent=exam==='practical'?'28 SETEMBRO · PROVA PRÁTICA':'05 OUTUBRO · PROVA TEÓRICA';$('topic-title').textContent=topics.find(t=>t.id===topic)?.name||'Todos os assuntos';$('topic-intro').textContent='Altere o assunto ou o filtro para continuar.';$('source').hidden=true;return;}
+ $('save-status').textContent='';$('topic-intro').hidden=training;checklist();if(!c){$('topic-kicker').textContent=exam==='practical'?'28 SETEMBRO · PROVA PRÁTICA':'05 OUTUBRO · PROVA TEÓRICA';$('topic-title').textContent=topics.find(t=>t.id===topic)?.name||'Todos os assuntos';$('topic-intro').textContent='Altere o assunto ou o filtro para continuar.';$('source').hidden=true;return;}
  const t=topics.find(t=>t.id===c.topic);$('topic-kicker').textContent=exam==='practical'?'28 SETEMBRO · PROVA PRÁTICA':'05 OUTUBRO · PROVA TEÓRICA';$('topic-title').textContent=t.name;$('topic-intro').textContent=t.intro;$('source').href=t.source;$('source').hidden=false;
  $('position').textContent=`ITEM ${position+1} DE ${queue.length}`;$('kind').textContent=c.visual?'IDENTIFICAÇÃO 3D':c.bone?'NOME PELA DESCRIÇÃO':'CONCEITO';
  $('prompt').textContent=c.prompt;$('answer').textContent=c.answer;$('note').textContent=c.note;
