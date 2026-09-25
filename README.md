@@ -84,3 +84,23 @@ Painel Minhas anotações em cada osso ou músculo, com até 4.000 caracteres e 
 ### Hospedagem no Railway
 
 A adaptação independente com Node.js, SQLite persistente e acesso público com históricos separados por navegador está em `server/`. Ver `RAILWAY.md` para configurar GitHub, volume, variáveis e publicação automática. A transferência dos dados antigos e a primeira publicação no Railway permanecem pendentes.
+
+## Laboratório de peças da prova prática
+
+`/pecas.html` isola seis regiões: pelve/sacro, L3, clavícula direita, esterno, mão direita e pé direito. São 64 pontos: 36 extremidades de anotações anatômicas do Z-Anatomy e 28 identificadores de ossos/partes inteiras. Os pontos anatômicos usam o vértice 1 da anotação original após avaliação dos modificadores Hook; os dos ossos inteiros usam um vértice próximo ao centro da malha. Forames são identificados no espaço da abertura, não projetados artificialmente na superfície.
+
+Selecionar um ponto orienta e aproxima a câmera; a lista funciona com teclado. Há seis vistas, isolamento do osso, ocultação de nomes, pesquisa e links diretos. Pontos encobertos por geometria opaca são ocultados para evitar identificação através da peça. O carregamento é por região, sem substituir `skeleton.bin`. Os modelos do Sketchfab indicados pelo usuário são incorporados sob demanda como comparação externa, mantendo o original e seus créditos; suas coordenadas e anotações não são transplantadas para as nossas peças.
+
+A geometria nativa é a malha disponível no atlas, sem decimação adicional nem subdivisão que invente detalhe. Algumas peças, como L3 e quadril, já são simplificadas na fonte. O sacro preserva os triângulos do original, que tinham sido reduzidos no esqueleto geral. Isso não equivale à resolução da digitalização de 153 mil triângulos indicada no Sketchfab.
+
+Reprodução com Python 3.11 e bpy 4.2.0, a partir de `Z-Anatomy/Startup.blend` do repositório original:
+
+```sh
+python export-study-pieces.py /caminho/Startup.blend /tmp/extracted-study.json
+python package-study-pieces.py /tmp/extracted-study.json
+node translate-study-pieces.mjs
+node tests/pieces.test.mjs
+node tests/exam.test.mjs
+```
+
+A extração carrega somente os objetos necessários, sem executar scripts do arquivo. Os testes verificam índices, coordenadas finitas, proximidade das marcações à superfície (com exceções explícitas para forames), enquadramento, nomes e links. Uma falha de WebGL mantém a lista de pontos acessível e oferece nova tentativa.

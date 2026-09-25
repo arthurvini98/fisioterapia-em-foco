@@ -1,3 +1,4 @@
+import {pieceLink} from './piece-data.js';
 import {topics,cards,cardPool,shuffle,loadProgress} from './exam-data.js';
 const $=id=>document.getElementById(id);
 let storage;try{storage=localStorage;}catch{}
@@ -25,6 +26,7 @@ function render(){
  const t=topics.find(t=>t.id===c.topic);$('topic-kicker').textContent=exam==='practical'?'28 SETEMBRO · PROVA PRÁTICA':'05 OUTUBRO · PROVA TEÓRICA';$('topic-title').textContent=t.name;$('topic-intro').textContent=t.intro;$('source').href=t.source;$('source').hidden=false;
  $('position').textContent=`ITEM ${position+1} DE ${queue.length}`;$('kind').textContent=c.visual?'IDENTIFICAÇÃO 3D':c.bone?'NOME PELA DESCRIÇÃO':'CONCEITO';
  $('prompt').textContent=c.prompt;$('answer').textContent=c.answer;$('note').textContent=c.note;
+ $('marked-piece').hidden=true;const currentCard=c;const currentRender=renderId;const pieceKey={pelvis:'pelve',vertebra:'lombar',clavicle:'clavicula',sternum:'esterno',hand:'mao',foot:'pe'}[c.topic];if(pieceKey)fetch(`pecas/${pieceKey}.json`).then(r=>r.ok?r.json():null).then(d=>{if(currentRender!==renderId||!d)return;const point=d.points.find(p=>p.kind==='bone'?p.bone===currentCard.bone:p.name===currentCard.answer||currentCard.answer.startsWith(p.name+' ('));if(point){$('marked-piece').href=pieceLink(pieceKey,point.id);$('marked-piece').hidden=false;}}).catch(()=>{});
  $('atlas').hidden=!c.bone;if(c.bone)$('atlas').href='./#'+new URLSearchParams({estrutura:c.bone});
  revealed=!training;$('answer-panel').hidden=!revealed;$('assessment').hidden=!revealed;$('reveal').hidden=revealed;
  $('assessment-hint').textContent=training?'Diga sua resposta em voz alta. Depois revele e avalie se lembrou.':'Leia, localize e diga o nome. “Lembrei” e “Preciso revisar” registram sua autoavaliação.';
