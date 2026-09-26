@@ -32,7 +32,7 @@ export class PieceViewer{
  placePins(){
   if(!this.data)return;this.camera.updateMatrixWorld();const visible=this.occluders.filter(m=>{const bone=this.meshes.get(m.userData.bone);return bone.visible&&bone.material.opacity>.5;});
   for(const p of this.data.points){const button=this.pins.get(p.id),world=new T.Vector3(...p.position),projected=world.clone().project(this.camera),mesh=this.meshes.get(p.bone);let hidden=!this.showPins||!mesh.visible||projected.z<-1||projected.z>1||Math.abs(projected.x)>1||Math.abs(projected.y)>1;
-   if(!hidden){const delta=world.clone().sub(this.camera.position),distance=delta.length();this.raycaster.set(this.camera.position,delta.normalize());this.raycaster.far=distance-.001;hidden=this.raycaster.intersectObjects(visible,false).length>0;}
+   if(!hidden&&p.kind!=='bone'){const delta=world.clone().sub(this.camera.position),distance=delta.length();this.raycaster.set(this.camera.position,delta.normalize());this.raycaster.far=distance-.001;hidden=this.raycaster.intersectObjects(visible,false).length>0;}
    button.hidden=hidden;if(!hidden){button.style.left=`${(projected.x*.5+.5)*this.host.clientWidth}px`;button.style.top=`${(-projected.y*.5+.5)*this.host.clientHeight}px`;}
   }
  }
