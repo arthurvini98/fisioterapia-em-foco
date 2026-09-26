@@ -18,7 +18,7 @@ function details(){
  $('reveal-point').hidden=!selected||!hideNames||revealed;$('copy-point').disabled=!selected;
  $('piece-description').hidden=hideNames;$('point-search').disabled=hideNames;viewer?.labels(hideNames);
 }
-function select(id){selected=data.points.find(p=>p.id===id);if(!selected)return;revealed=false;viewer?.select(id);$('view-status').textContent=`${labels[selected.view]} · foco no ponto ${data.points.indexOf(selected)+1}`;history.replaceState(null,'',pieceLink(piece,id));$('copy-status').textContent='';details();list();}
+function select(id){selected=data.points.find(p=>p.id===id);if(!selected)return;revealed=false;viewer?.select(id);history.replaceState(null,'',pieceLink(piece,id));$('copy-status').textContent='';details();list();}
 async function graphics(dataset,ticket){
  if(graphicsFailed)return;
  try{if(!viewer){const{PieceViewer}=await import('./piece-viewer.js');if(ticket!==version)return;viewer=new PieceViewer($('piece-host'),$('pin-layer'),select,()=>{$('view-status').textContent='Vista livre · arraste para explorar';});}viewer.isolated=$('isolate-piece').checked;viewer.showPins=$('show-pins').checked;viewer.display(dataset);if(selected)viewer.select(selected.id);viewer.labels(hideNames);$('piece-status').hidden=true;$('retry-piece').hidden=true;$('piece-host').classList.remove('loading-piece');$('pin-layer').hidden=false;}
@@ -30,7 +30,7 @@ async function loadPiece(){
  document.querySelectorAll('[data-piece]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.piece===piece)));
  $('external-panel').hidden=!config.sketchfab;$('external-panel').open=false;$('external-host').replaceChildren();$('load-external').hidden=false;if(config.external)$('external-link').href=config.external;
  history.replaceState(null,'',pieceLink(piece,linkedPoint));
- try{if(!cache.has(piece)){const loaded=await loadPieceData(piece);if(ticket!==version)return;cache.set(piece,loaded);}data=cache.get(piece);if(ticket!==version)return;if(data.geometry){$('scan-credit').hidden=false;$('scan-source').textContent=data.source;$('scan-source').href=data.sourceUrl;$('scan-note').textContent=data.note;}list();details();await graphics(data,ticket);if(ticket!==version)return;if(linkedPoint)select(linkedPoint);else{$('view-status').textContent=`Vista ${labels[data.initialView||'front'].toLowerCase()} · peça inteira`;}$('point-name').textContent=selected?$('point-name').textContent:'Escolha um ponto numerado.';}
+ try{if(!cache.has(piece)){const loaded=await loadPieceData(piece);if(ticket!==version)return;cache.set(piece,loaded);}data=cache.get(piece);if(ticket!==version)return;if(data.geometry){$('scan-credit').hidden=false;$('scan-source').textContent=data.source;$('scan-source').href=data.sourceUrl;$('scan-note').textContent=data.note;}list();details();await graphics(data,ticket);if(ticket!==version)return;$('view-status').textContent=`Vista ${labels[data.initialView||'front'].toLowerCase()} · peça inteira`;if(linkedPoint)select(linkedPoint);$('point-name').textContent=selected?$('point-name').textContent:'Escolha um ponto numerado.';}
  catch(error){if(ticket!==version)return;$('piece-status').hidden=false;$('piece-status').textContent='Não foi possível baixar a peça. '+error.message;$('retry-piece').hidden=false;}
 }
 $('hide-names').onclick=()=>{hideNames=!hideNames;revealed=false;if(hideNames)$('point-search').value='';$('hide-names').setAttribute('aria-pressed',String(hideNames));$('hide-names').textContent=hideNames?'Mostrar nomes':'Esconder nomes para treinar';if(data){list();details();}};

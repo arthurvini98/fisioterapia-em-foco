@@ -20,7 +20,7 @@ export class PieceViewer{
   data.points.forEach((point,i)=>{const b=document.createElement('button');b.className='pin';b.textContent=i+1;b.setAttribute('aria-label',`Ponto ${i+1}: ${point.name}`);b.onclick=()=>this.onSelect(point.id);this.pinLayer.append(b);this.pins.set(point.id,b);});this.direction=data.initialView||'front';this.paint();this.frame();
  }
  paint(){for(const[name,m]of this.meshes){const chosen=!this.selected||name===this.selected.bone;m.visible=!this.isolated||chosen;m.material.color.setHex(this.selected&&chosen?0xf2d89e:0xece3cb);m.material.transparent=!chosen;m.material.opacity=chosen?1:.25;m.material.depthWrite=chosen;}for(const[id,b]of this.pins)b.setAttribute('aria-pressed',String(id===this.selected?.id));this.loop.request();}
- select(id){this.selected=this.data.points.find(p=>p.id===id)||null;this.paint();this.frame(this.selected?.view||'front',true);}
+ select(id){this.selected=this.data.points.find(p=>p.id===id)||null;this.paint();}
  frame(direction=this.direction,focus=false){
   this.direction=direction;if(!this.data)return;this.camera.up.set(0,1,0);if(direction==='top')this.camera.up.set(0,0,-1);if(direction==='bottom')this.camera.up.set(0,0,1);
   let box=new T.Box3();for(const m of this.meshes.values())if(m.visible)box.expandByObject(m);if(box.isEmpty())return;
