@@ -1,7 +1,8 @@
 import {pieces,pieceRoute,pieceLink} from './piece-data.js';
+import {loadPieceData} from './scan-geometry.js';
 import {cards} from './exam-data.js';
 const $=id=>document.getElementById(id),cache=new Map();let {piece,point:linkedPoint}=pieceRoute(location.hash),data=null,selected=null,viewer=null,hideNames=false,revealed=false,version=0,graphicsFailed=false;
-const labels={front:'Anterior',back:'Posterior',lateral:'Lateral direita',medial:'Medial direita',top:'Superior',bottom:'Inferior'};
+let labels={front:'Anterior',back:'Posterior',lateral:'Lateral direita',medial:'Medial direita',top:'Superior',bottom:'Inferior'};
 const normalize=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 for(const[key,p]of Object.entries(pieces)){const b=document.createElement('button');b.textContent=p.name;b.dataset.piece=key;b.onclick=()=>{piece=key;linkedPoint=null;loadPiece();};$('piece-tabs').append(b);}
 function list(){
@@ -13,7 +14,7 @@ function details(){
  $('point-number').textContent=selected?`PONTO ${data.points.indexOf(selected)+1} · ${selected.kind==='bone'?'OSSO INTEIRO':'ACIDENTE ANATÔMICO'}`:'ESCOLHA UM PONTO';
  $('point-name').textContent=selected?(hideNames&&!revealed?'Qual é o nome deste ponto?':selected.name):'Localize primeiro. Diga o nome.';
  const card=selected&&cards.find(c=>c.answer===selected.name||c.answer.startsWith(selected.name+' ('));
- $('point-description').textContent=selected&&(!hideNames||revealed)?(card&&!card.visual?card.prompt:card?.note||'Observe a posição na peça. Use as outras vistas para reconhecer suas relações.') :'';
+ $('point-description').textContent=selected&&(!hideNames||revealed)?(selected.note||(card&&!card.visual?card.prompt:card?.note)||'Observe a posição na peça. Use as outras vistas para reconhecer suas relações.') :'';
  $('reveal-point').hidden=!selected||!hideNames||revealed;$('copy-point').disabled=!selected;
  $('piece-description').hidden=hideNames;$('point-search').disabled=hideNames;viewer?.labels(hideNames);
 }
@@ -25,17 +26,17 @@ async function graphics(dataset,ticket){
 }
 async function loadPiece(){
  const ticket=++version;$('piece-host').classList.add('loading-piece');$('pin-layer').hidden=true;selected=null;data=null;$('point-list').replaceChildren();$('point-search').value='';$('point-name').textContent='Carregando…';$('piece-status').hidden=false;$('piece-status').textContent=graphicsFailed?'O 3D está indisponível neste navegador. Use Tentar carregar novamente.':'Carregando peça…';$('point-description').textContent='';$('reveal-point').hidden=true;$('copy-point').disabled=true;$('point-count').textContent='';$('copy-status').textContent='';
- const config=pieces[piece];$('piece-title').textContent=config.name;$('piece-description').textContent=config.description;$('piece-description').hidden=hideNames;
+ const config=pieces[piece];labels={...labels,lateral:config.side==='esquerda'?'Lateral esquerda':'Lateral direita',medial:piece==='l5-real'||piece==='lombar'?'Lateral esquerda':config.side==='esquerda'?'Medial esquerda':'Medial direita'};for(const b of document.querySelectorAll('[data-direction]'))b.textContent=labels[b.dataset.direction];$('scan-credit').hidden=true;$('piece-title').textContent=config.name;$('piece-description').textContent=config.description;$('piece-description').hidden=hideNames;
  document.querySelectorAll('[data-piece]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.piece===piece)));
  $('external-panel').hidden=!config.sketchfab;$('external-panel').open=false;$('external-host').replaceChildren();$('load-external').hidden=false;if(config.external)$('external-link').href=config.external;
  history.replaceState(null,'',pieceLink(piece,linkedPoint));
- try{if(!cache.has(piece)){const r=await fetch(`pecas/${piece}.json`);if(!r.ok)throw Error('HTTP '+r.status);const loaded=await r.json();if(ticket!==version)return;cache.set(piece,loaded);}data=cache.get(piece);if(ticket!==version)return;list();details();await graphics(data,ticket);if(ticket!==version)return;if(linkedPoint)select(linkedPoint);else{$('view-status').textContent='Vista anterior · lados do corpo observado';}$('point-name').textContent=selected?$('point-name').textContent:'Escolha um ponto numerado.';}
- catch(error){$('piece-status').hidden=false;$('piece-status').textContent='Não foi possível baixar a peça. '+error.message;$('retry-piece').hidden=false;}
+ try{if(!cache.has(piece)){const loaded=await loadPieceData(piece);if(ticket!==version)return;cache.set(piece,loaded);}data=cache.get(piece);if(ticket!==version)return;if(data.geometry){$('scan-credit').hidden=false;$('scan-source').textContent=data.source;$('scan-source').href=data.sourceUrl;$('scan-note').textContent=data.note;}list();details();await graphics(data,ticket);if(ticket!==version)return;if(linkedPoint)select(linkedPoint);else{$('view-status').textContent=`Vista ${labels[data.initialView||'front'].toLowerCase()} · peça inteira`;}$('point-name').textContent=selected?$('point-name').textContent:'Escolha um ponto numerado.';}
+ catch(error){if(ticket!==version)return;$('piece-status').hidden=false;$('piece-status').textContent='Não foi possível baixar a peça. '+error.message;$('retry-piece').hidden=false;}
 }
 $('hide-names').onclick=()=>{hideNames=!hideNames;revealed=false;if(hideNames)$('point-search').value='';$('hide-names').setAttribute('aria-pressed',String(hideNames));$('hide-names').textContent=hideNames?'Mostrar nomes':'Esconder nomes para treinar';if(data){list();details();}};
 $('reveal-point').onclick=()=>{revealed=true;details();};$('point-search').oninput=()=>{if(data)list();};
 for(const b of document.querySelectorAll('[data-direction]'))b.onclick=()=>{viewer?.frame(b.dataset.direction);$('view-status').textContent=`Vista ${labels[b.dataset.direction].toLowerCase()} · peça inteira`;};
-$('whole').onclick=()=>{$('isolate-piece').checked=false;if(viewer){viewer.isolated=false;viewer.paint();viewer.frame('front');}$('view-status').textContent='Vista anterior · peça inteira';};
+$('whole').onclick=()=>{$('isolate-piece').checked=false;if(viewer){viewer.isolated=false;viewer.paint();viewer.frame(data?.initialView||'front');}$('view-status').textContent=`Vista ${labels[data?.initialView||'front'].toLowerCase()} · peça inteira`;};
 $('isolate-piece').onchange=()=>{if(viewer){viewer.isolated=$('isolate-piece').checked;viewer.paint();viewer.frame();}};
 $('show-pins').onchange=()=>{if(viewer){viewer.showPins=$('show-pins').checked;viewer.loop.request();}};
 $('retry-piece').onclick=()=>{viewer?.dispose();viewer=null;graphicsFailed=false;$('piece-status').textContent='Preparando a peça…';loadPiece();};

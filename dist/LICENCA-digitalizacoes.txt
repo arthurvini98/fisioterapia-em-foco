@@ -1,0 +1,36 @@
+DIGITALIZAÇÕES ANATÔMICAS — ATRIBUIÇÃO
+
+1. Fifth Lumbar Vertebra (L5)
+Autor: UNCG Imaging Lab. Criadora: Keri Newsome.
+Peça da coleção do departamento de antropologia da University of North
+Carolina at Greensboro, digitalizada com permissão do Dr. Robert Anemone.
+Fotogrametria: Agisoft PhotoScan Professional e Geomagic Wrap 2014.
+Fonte: https://commons.wikimedia.org/wiki/File:Fifth_Lumbar_Vertebra.stl
+Original: https://upload.wikimedia.org/wikipedia/commons/6/62/Fifth_Lumbar_Vertebra.stl
+
+2. Human pelvis (osso do quadril isolado)
+Autores: Eric Bauer e laboratório de anatomia humana da Elon University.
+Fonte: https://commons.wikimedia.org/wiki/File:Human_pelvis.stl
+Original: https://upload.wikimedia.org/wikipedia/commons/0/09/Human_pelvis.stl
+A versão disponibilizada no Commons já havia sido reduzida por Dumbleporte.
+
+Licença de ambos os arquivos: Creative Commons Attribution 4.0 International.
+https://creativecommons.org/licenses/by/4.0/
+
+ALTERAÇÕES NO APP
+Redução para aproximadamente 100 mil triângulos por peça, orientação,
+normalização de escala para exibição, quantização de coordenadas e conversão
+para binário AFE1. Cor ilustrativa; os arquivos STL não incluem textura
+fotográfica. A escala normalizada não representa uma medição do indivíduo.
+Marcações didáticas em português adicionadas pelo Anatomia em foco;
+não fazem parte das anotações originais dos autores. Os pontos indicam
+referências, não limites completos de regiões anatômicas.
+Não se sugere endosso do aplicativo pelos autores ou pelas instituições.
+
+Referências para identificação das estruturas:
+OpenStax, Anatomy and Physiology 2e, seções 7.3 e 8.3:
+https://openstax.org/books/anatomy-and-physiology-2e/pages/7-3-the-vertebral-column
+https://openstax.org/books/anatomy-and-physiology-2e/pages/8-3-the-pelvic-girdle-and-pelvis
+
+As demais peças do atlas continuam com sua licença própria CC BY-SA 4.0.
+Consulte LICENCA-modelo.txt.

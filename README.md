@@ -104,3 +104,28 @@ node tests/exam.test.mjs
 ```
 
 A extração carrega somente os objetos necessários, sem executar scripts do arquivo. Os testes verificam índices, coordenadas finitas, proximidade das marcações à superfície (com exceções explícitas para forames), enquadramento, nomes e links. Uma falha de WebGL mantém a lista de pontos acessível e oferece nova tentativa.
+
+### Peças digitalizadas reais
+
+O laboratório abre no osso do quadril digitalizado e também oferece L5. São
+21 pontos novos, separados dos 64 pontos das peças anteriores. As digitalizações
+vêm de UNCG Imaging Lab e Eric Bauer / Elon University, CC BY 4.0. Os créditos,
+fontes e alterações estão em `dist/LICENCA-digitalizacoes.txt`.
+
+Para reproduzir os arquivos, baixe os dois STL indicados nos créditos como
+`l5.stl` e `pelvis.stl` em uma pasta e execute, com Python e `bpy` 4.2:
+
+```sh
+python export-scanned-pieces.py /caminho/para/os/stl
+node tests/scans.test.mjs
+node tests/pieces.test.mjs
+```
+
+O exportador orienta e reduz as malhas para cerca de 100 mil triângulos, grava
+coordenadas e índices em uint16 com limites compartilhados, e gera uma malha
+auxiliar de aproximadamente 5 mil triângulos para ocultar pontos encobertos sem
+percorrer a malha completa durante cada movimento da câmera. `scan-geometry.js`
+valida formato, tamanho e índices antes de criar buffers. Cada arquivo fica abaixo
+de 1 MB e só é carregado quando a peça é escolhida. Os pontos foram registrados
+por inspeção em vistas ortográficas e raycast na superfície; não foram copiados
+do Z-Anatomy. Não há textura fotográfica nem escala de medida clínica.
