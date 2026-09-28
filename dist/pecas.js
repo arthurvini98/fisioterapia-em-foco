@@ -9,7 +9,7 @@ let labels={front:'Anterior',back:'Posterior',lateral:'Lateral direita',medial:'
 const normalize=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 for(const[key,p]of Object.entries(pieces)){const b=document.createElement('button');b.textContent=p.name;b.dataset.piece=key;b.onclick=()=>{piece=key;linkedPoint=null;loadPiece();};$('piece-tabs').append(b);}
 function practiceUI(){
- const ready=!!data;$('practice-next').disabled=!ready;
+ const ready=!!data,index=data?.points.indexOf(selected)??-1;$('practice-next').disabled=!ready;$('practice-sequence').disabled=!ready;$('point-previous').disabled=!ready||index<=0;$('point-next').disabled=!ready||index>=data.points.length-1;$('sequence-status').textContent=!ready?'':index<0?'Nenhum ponto selecionado':`Ponto ${index+1} de ${data.points.length}${index===data.points.length-1?' · último desta peça':''}`;
  if(!ready){$('practice-progress').textContent='Carregando estruturas…';$('practice-grade').hidden=true;return;}
  const c=practiceCounts(practiceRecords,piece,data.points);
  $('practice-progress').textContent=`${c.known}/${data.points.length} já sei · ${c.review} para revisar · ${c.unseen} ainda não avaliadas`;
@@ -45,11 +45,20 @@ async function loadPiece(){
  try{if(!cache.has(piece)){const loaded=await loadPieceData(piece);if(ticket!==version)return;cache.set(piece,loaded);}data=cache.get(piece);if(ticket!==version)return;if(data.geometry){$('scan-credit').hidden=false;$('scan-source').textContent=data.source;$('scan-source').href=data.sourceUrl;$('scan-note').textContent=data.note;}list();details();await graphics(data,ticket);if(ticket!==version)return;$('view-status').textContent=`Vista ${labels[data.initialView||'front'].toLowerCase()} · peça inteira`;if(linkedPoint)select(linkedPoint);$('point-name').textContent=selected?$('point-name').textContent:'Escolha um ponto numerado.';}
  catch(error){if(ticket!==version)return;$('piece-status').hidden=false;$('piece-status').textContent='Não foi possível baixar a peça. '+error.message;$('retry-piece').hidden=false;}
 }
+function prepareTraining(){
+ hideNames=true;revealed=false;$('point-search').value='';$('hide-names').setAttribute('aria-pressed','true');$('hide-names').textContent='Mostrar nomes';
+ $('show-pins').checked=true;if(viewer){viewer.showPins=true;viewer.loop.request();}
+}
+$('practice-sequence').onclick=()=>{if(!data?.points.length)return;prepareTraining();$('practice-feedback').textContent='Percorra os pontos em ordem. Revele o nome, avalie sua resposta e avance quando estiver pronto.';select(data.points[0].id);};
+for(const [button,step] of [['point-previous',-1],['point-next',1]])$(button).onclick=()=>{
+ if(!data)return;const index=data.points.indexOf(selected),next=index+step;
+ if(next<0||next>=data.points.length)return;
+ $('practice-feedback').textContent='';select(data.points[next].id);
+};
 $('practice-next').onclick=()=>{
  if(!data)return;
  const next=pickPracticePoint(practiceRecords,piece,data.points,selected?.id);if(!next)return;
- hideNames=true;revealed=false;$('point-search').value='';$('hide-names').setAttribute('aria-pressed','true');$('hide-names').textContent='Mostrar nomes';
- $('show-pins').checked=true;if(viewer){viewer.showPins=true;viewer.loop.request();}
+ prepareTraining();
  $('practice-feedback').textContent='Diga o nome em voz alta antes de revelar. Se o ponto estiver atrás da peça, gire o modelo.';select(next.id);
 };
 for(const [id,status] of [['practice-known','known'],['practice-review','review']])$(id).onclick=()=>{

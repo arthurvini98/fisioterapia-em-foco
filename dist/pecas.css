@@ -5,3 +5,5 @@
 #scan-credit{background:#edf5f3;border-left:3px solid #287e72;padding:12px 16px;font-size:12px;line-height:1.5;margin-bottom:16px}#scan-credit p{margin:5px 0}
 
 .practice-box{padding:16px;border:1px solid #c7dcd6;background:#edf5f3;border-radius:12px;margin-bottom:18px}.practice-box p{font-size:13px;line-height:1.5}.practice-box .eyebrow{margin-top:0}#practice-next{width:100%;background:#164c48;color:white}#practice-grade{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}#practice-progress{font-weight:600}#practice-feedback:empty{display:none}
+
+#practice-sequence{width:100%;margin-top:8px}.point-navigation{display:flex;gap:8px;margin-top:18px}.point-navigation button{flex:1;font-size:12px;padding:10px 8px}#sequence-status{font-size:12px;margin-bottom:0}.point-navigation button:disabled{opacity:.45;cursor:default}
