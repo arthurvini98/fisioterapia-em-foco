@@ -5,7 +5,7 @@ import {focusFrame} from './focus.js';
 import {directions} from './piece-data.js';
 export class PieceViewer{
  constructor(host,pinLayer,onSelect,onOrbit){
-  this.host=host;this.pinLayer=pinLayer;this.onSelect=onSelect;this.meshes=new Map();this.occluders=[];this.pins=new Map();this.selected=null;this.showPins=true;this.isolated=false;this.direction='front';this.raycaster=new T.Raycaster();
+  this.host=host;this.pinLayer=pinLayer;this.onSelect=onSelect;this.meshes=new Map();this.occluders=[];this.pins=new Map();this.selected=null;this.showPins=true;this.selectedPinOnly=false;this.isolated=false;this.direction='front';this.raycaster=new T.Raycaster();
   this.scene=new T.Scene();this.scene.background=new T.Color(0x142f3b);this.camera=new T.PerspectiveCamera(38,1,.001,20);
   this.renderer=new T.WebGLRenderer({antialias:true});this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));host.prepend(this.renderer.domElement);this.renderer.domElement.tabIndex=0;this.renderer.domElement.setAttribute('aria-label','Peça anatômica 3D. Arraste para girar e role para ampliar. Use os botões de vista e a lista para selecionar pontos pelo teclado.');
   this.controls=new OrbitControls(this.camera,this.renderer.domElement);this.controls.enableDamping=true;this.controls.zoomToCursor=true;this.controls.minDistance=.02;this.controls.maxDistance=3;
@@ -31,7 +31,7 @@ export class PieceViewer{
  labels(hidden){for(const p of this.data?.points||[]){const b=this.pins.get(p.id);b.setAttribute('aria-label',hidden?`Ponto ${b.textContent}`:`Ponto ${b.textContent}: ${p.name}`);}}
  placePins(){
   if(!this.data)return;this.camera.updateMatrixWorld();const visible=this.occluders.filter(m=>{const bone=this.meshes.get(m.userData.bone);return bone.visible&&bone.material.opacity>.5;});
-  for(const p of this.data.points){const button=this.pins.get(p.id),world=new T.Vector3(...p.position),projected=world.clone().project(this.camera),mesh=this.meshes.get(p.bone);let hidden=!this.showPins||!mesh.visible||projected.z<-1||projected.z>1||Math.abs(projected.x)>1||Math.abs(projected.y)>1;
+  for(const p of this.data.points){const button=this.pins.get(p.id),world=new T.Vector3(...p.position),projected=world.clone().project(this.camera),mesh=this.meshes.get(p.bone);let hidden=!this.showPins||(this.selectedPinOnly&&this.selected&&p.id!==this.selected.id)||!mesh.visible||projected.z<-1||projected.z>1||Math.abs(projected.x)>1||Math.abs(projected.y)>1;
    if(!hidden&&p.kind!=='bone'){const delta=world.clone().sub(this.camera.position),distance=delta.length();this.raycaster.set(this.camera.position,delta.normalize());this.raycaster.far=distance-.001;hidden=this.raycaster.intersectObjects(visible,false).length>0;}
    button.hidden=hidden;if(!hidden){button.style.left=`${(projected.x*.5+.5)*this.host.clientWidth}px`;button.style.top=`${(-projected.y*.5+.5)*this.host.clientHeight}px`;}
   }

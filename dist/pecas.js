@@ -33,7 +33,7 @@ function details(){
 function select(id){selected=data.points.find(p=>p.id===id);if(!selected)return;revealed=false;viewer?.select(id);history.replaceState(null,'',pieceLink(piece,id));$('copy-status').textContent='';details();list();}
 async function graphics(dataset,ticket){
  if(graphicsFailed)return;
- try{if(!viewer){const{PieceViewer}=await import('./piece-viewer.js');if(ticket!==version)return;viewer=new PieceViewer($('piece-host'),$('pin-layer'),select,()=>{$('view-status').textContent='Vista livre · arraste para explorar';});}viewer.isolated=$('isolate-piece').checked;viewer.showPins=$('show-pins').checked;viewer.display(dataset);if(selected)viewer.select(selected.id);viewer.labels(hideNames);$('piece-status').hidden=true;$('retry-piece').hidden=true;$('piece-host').classList.remove('loading-piece');$('pin-layer').hidden=false;}
+ try{if(!viewer){const{PieceViewer}=await import('./piece-viewer.js');if(ticket!==version)return;viewer=new PieceViewer($('piece-host'),$('pin-layer'),select,()=>{$('view-status').textContent='Vista livre · arraste para explorar';});}viewer.isolated=$('isolate-piece').checked;viewer.showPins=$('show-pins').checked;viewer.selectedPinOnly=$('selected-pin-only').checked;viewer.display(dataset);if(selected)viewer.select(selected.id);viewer.labels(hideNames);$('piece-status').hidden=true;$('retry-piece').hidden=true;$('piece-host').classList.remove('loading-piece');$('pin-layer').hidden=false;}
  catch(error){graphicsFailed=true;viewer?.dispose();viewer=null;$('piece-status').hidden=false;$('piece-status').textContent='Não foi possível iniciar o 3D. Confira a aceleração gráfica do navegador. '+error.message;$('retry-piece').hidden=false;}
 }
 async function loadPiece(){
@@ -47,7 +47,7 @@ async function loadPiece(){
 }
 function prepareTraining(){
  hideNames=true;revealed=false;$('point-search').value='';$('hide-names').setAttribute('aria-pressed','true');$('hide-names').textContent='Mostrar nomes';
- $('show-pins').checked=true;if(viewer){viewer.showPins=true;viewer.loop.request();}
+ $('show-pins').checked=true;$('selected-pin-only').checked=true;if(viewer){viewer.showPins=true;viewer.selectedPinOnly=true;viewer.loop.request();}
 }
 $('practice-sequence').onclick=()=>{if(!data?.points.length)return;prepareTraining();$('practice-feedback').textContent='Percorra os pontos em ordem. Revele o nome, avalie sua resposta e avance quando estiver pronto.';select(data.points[0].id);};
 for(const [button,step] of [['point-previous',-1],['point-next',1]])$(button).onclick=()=>{
@@ -71,6 +71,7 @@ $('reveal-point').onclick=()=>{revealed=true;details();};$('point-search').oninp
 for(const b of document.querySelectorAll('[data-direction]'))b.onclick=()=>{viewer?.frame(b.dataset.direction);$('view-status').textContent=`Vista ${labels[b.dataset.direction].toLowerCase()} · peça inteira`;};
 $('whole').onclick=()=>{$('isolate-piece').checked=false;if(viewer){viewer.isolated=false;viewer.paint();viewer.frame(data?.initialView||'front');}$('view-status').textContent=`Vista ${labels[data?.initialView||'front'].toLowerCase()} · peça inteira`;};
 $('isolate-piece').onchange=()=>{if(viewer){viewer.isolated=$('isolate-piece').checked;viewer.paint();viewer.frame();}};
+$('selected-pin-only').onchange=()=>{if(viewer){viewer.selectedPinOnly=$('selected-pin-only').checked;viewer.loop.request();}};
 $('show-pins').onchange=()=>{if(viewer){viewer.showPins=$('show-pins').checked;viewer.loop.request();}};
 $('retry-piece').onclick=()=>{viewer?.dispose();viewer=null;graphicsFailed=false;$('piece-status').textContent='Preparando a peça…';loadPiece();};
 $('piece-host').addEventListener('piece-graphics-lost',()=>{graphicsFailed=true;$('piece-status').hidden=false;$('piece-status').textContent='O navegador interrompeu o 3D. Tente carregar novamente.';$('retry-piece').hidden=false;});
