@@ -17,3 +17,9 @@ assert.deepEqual(readPractice(undefined),{});
 assert.equal(markPractice(records,undefined,'pe','a','review'),false);
 assert.equal(practiceStatus(records,'pe','a'),'review');
 console.log('PASS: saved per-piece progress, review priority, no immediate repeat with alternatives, completed set restart and unavailable storage');
+const fs=await import('node:fs');const {practiceCatalog}=await import('../dist/practice-catalog.js');const {pieces}=await import('../dist/piece-data.js');const {topics}=await import('../dist/exam-data.js');
+assert.deepEqual(Object.keys(practiceCatalog),Object.keys(pieces));let total=0;
+for(const [piece,list] of Object.entries(practiceCatalog)){assert.deepEqual(list,JSON.parse(fs.readFileSync(`dist/pecas/${piece}.json`)).points.map(({id,name})=>({id,name})));total+=list.length;}
+assert.equal(total,85);assert.equal(topics.filter(t=>t.exam==='practical').length,7);
+const html=fs.readFileSync('dist/revisao-pratica.html','utf8'),js=fs.readFileSync('dist/revisao-pratica.js','utf8');const ids=[...html.matchAll(/id="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,new Set(ids).size);for(const [,id] of js.matchAll(/\$\('([^']+)'\)/g))assert.ok(ids.includes(id),id);
+console.log('PASS: overview catalog matches all 85 point IDs and names, 8 pieces, 7 syllabus topics and HTML bindings');
